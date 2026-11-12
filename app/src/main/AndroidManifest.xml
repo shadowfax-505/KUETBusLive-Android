@@ -28,5 +28,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Keeps sharing the bus position while the driver's screen is off. -->
+        <service
+            android:name=".driver.TripLocationService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
     </application>
 </manifest>
