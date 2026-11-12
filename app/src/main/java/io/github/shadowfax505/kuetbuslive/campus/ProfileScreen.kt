@@ -98,7 +98,7 @@ fun ProfileScreen(
         item { SettingRow(Icons.Rounded.Feedback, "Complaints", "Send one and read replies", onClick = onOpenComplaints) }
         item { SettingRow(Icons.Rounded.Badge, "Account check", if (user.isApproved) "Verified KUET ${user.role.title.lowercase()}" else "Waiting for approval") }
         item { Spacer(Modifier.height(12.dp)) }
-        item { SettingRow(Icons.AutoMirrored.Rounded.Logout, "Sign out", null, tint = Brand.Coral) { confirmSignOut = true } }
+        item { SettingRow(Icons.AutoMirrored.Rounded.Logout, "Sign out", null, tint = Brand.Danger) { confirmSignOut = true } }
     }
 
     if (editingName) {
@@ -143,7 +143,7 @@ fun SettingRow(
         Icon(icon, null, tint = tint)
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, color = if (tint == Brand.Coral) tint else MaterialTheme.colorScheme.onSurface)
+            Text(title, style = MaterialTheme.typography.titleSmall, color = if (tint == Brand.Danger) tint else MaterialTheme.colorScheme.onSurface)
             subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         when {

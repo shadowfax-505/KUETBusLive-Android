@@ -183,8 +183,8 @@ private fun DriverTripScreen(user: AppUser, onProfile: () -> Unit) {
             color = MaterialTheme.colorScheme.surface,
         ) {
             Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(if (myBus == null) Brand.Amber else MaterialTheme.colorScheme.primary), contentAlignment = Alignment.Center) {
-                    Icon(if (myBus == null) Icons.Rounded.Warning else Icons.Rounded.DirectionsBus, null, tint = Color.White)
+                Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(if (myBus == null) Brand.Danger else MaterialTheme.colorScheme.primary), contentAlignment = Alignment.Center) {
+                    Icon(if (myBus == null) Icons.Rounded.Warning else Icons.Rounded.DirectionsBus, null, tint = if (myBus == null) Color.White else MaterialTheme.colorScheme.onPrimary)
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
@@ -215,7 +215,7 @@ private fun DriverTripScreen(user: AppUser, onProfile: () -> Unit) {
                             AudienceBadge(active.schedule.audience)
                         }
                         Spacer(Modifier.height(16.dp))
-                        PrimaryButton("End trip", onClick = { vm.endTrip() }, icon = Icons.Rounded.Stop, containerColor = Brand.Coral, contentColor = Color.White)
+                        PrimaryButton("End trip", onClick = { vm.endTrip() }, icon = Icons.Rounded.Stop, containerColor = Brand.Danger, contentColor = Color.White)
                     } else {
                         SectionTitle("Trip")
                         if (choices.isEmpty()) {
@@ -316,23 +316,23 @@ private fun WaitingBanner(waiting: List<WaitingRider>) {
             .fillMaxWidth()
             .shadow(12.dp, RoundedCornerShape(22.dp))
             .clip(RoundedCornerShape(22.dp))
-            .background(Brand.Amber)
+            .background(MaterialTheme.colorScheme.primary)
             .clickable { }
             .padding(18.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Rounded.PanTool, null, tint = Brand.Ink, modifier = Modifier.size(32.dp))
+        Icon(Icons.Rounded.PanTool, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(32.dp))
         Spacer(Modifier.width(14.dp))
         Column {
             Text(
                 if (waiting.size == 1) "1 rider waiting ahead" else "${waiting.size} riders waiting ahead",
                 style = MaterialTheme.typography.titleLarge,
-                color = Brand.Ink,
+                color = MaterialTheme.colorScheme.onPrimary,
             )
             Text(
                 "Next: ${nearest.wave.label} · ${formatDistance(nearest.metresAhead)}",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Brand.Ink,
+                color = MaterialTheme.colorScheme.onPrimary,
             )
         }
     }

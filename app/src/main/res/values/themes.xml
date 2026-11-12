@@ -3,7 +3,7 @@
     <style name="Theme.KUETBusLive" parent="android:Theme.Material.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-        <item name="android:windowBackground">@color/brand_navy</item>
+        <item name="android:windowBackground">@color/brand_black</item>
     </style>
 
     <style name="Theme.KUETBusLive.Splash" parent="Theme.SplashScreen">

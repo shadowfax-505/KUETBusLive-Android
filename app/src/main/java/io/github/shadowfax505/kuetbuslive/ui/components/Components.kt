@@ -59,9 +59,10 @@ import io.github.shadowfax505.kuetbuslive.model.BusAudience
 import io.github.shadowfax505.kuetbuslive.model.CrowdLevel
 import io.github.shadowfax505.kuetbuslive.ui.theme.Brand
 
-val BrandGradient = Brush.linearGradient(listOf(Color(0xFF12925F), Color(0xFF0E6470), Brand.Navy))
+val BrandGradient = Brush.linearGradient(listOf(Color(0xFF000000), Color(0xFF1C1C1C), Color(0xFF3A3A3A)))
 
-fun BusAudience.color(): Color = if (this == BusAudience.STUDENT) Brand.StudentBus else Brand.TeacherBus
+@Composable
+fun BusAudience.color(): Color = if (this == BusAudience.STUDENT) MaterialTheme.colorScheme.primary else Brand.Grey
 
 fun CrowdLevel.color(): Color = when (this) {
     CrowdLevel.UNKNOWN -> Brand.Unknown

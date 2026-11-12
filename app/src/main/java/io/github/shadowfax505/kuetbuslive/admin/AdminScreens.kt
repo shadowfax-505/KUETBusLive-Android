@@ -79,7 +79,7 @@ fun ApprovalsScreen(vm: AdminViewModel) {
         items(approved, key = { "a-" + it.id }) { user ->
             PersonCard(user) {
                 if (user.active) {
-                    TextButton(onClick = { vm.setActive(user, false) }) { Text("Deactivate", color = Brand.Coral) }
+                    TextButton(onClick = { vm.setActive(user, false) }) { Text("Deactivate", color = Brand.Danger) }
                 } else {
                     TextButton(onClick = { vm.setActive(user, true) }) { Text("Reactivate") }
                 }
@@ -93,7 +93,7 @@ fun ApprovalsScreen(vm: AdminViewModel) {
 private fun PersonCard(user: AppUser, actions: @Composable () -> Unit) {
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconBubble(Icons.Rounded.Person, if (user.role.raw == "driver") Brand.Amber else Brand.TeacherBus, size = 40.dp)
+            IconBubble(Icons.Rounded.Person, if (user.role.raw == "driver") MaterialTheme.colorScheme.primary else Brand.Grey, size = 40.dp)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(user.name, style = MaterialTheme.typography.titleSmall)
@@ -124,7 +124,7 @@ fun FleetScreen(admin: AppUser, vm: AdminViewModel, onBack: () -> Unit) {
         if (open.isNotEmpty()) {
             item { SectionTitle("Can't drive (${open.size})") }
             items(open, key = { "abs-" + it.id }) { absence ->
-                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Brand.Amber.copy(alpha = 0.15f)).padding(16.dp)) {
+                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest).padding(16.dp)) {
                     Text(absence.driverName, style = MaterialTheme.typography.titleSmall)
                     Text("${absence.fromDate} – ${absence.untilDate} · ${absence.reason}", style = MaterialTheme.typography.bodySmall)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -156,7 +156,7 @@ fun FleetScreen(admin: AppUser, vm: AdminViewModel, onBack: () -> Unit) {
                         Text("Cover: ${nameOf(c.driverId)}, ${c.fromDate} – ${c.untilDate}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                Pill(if (today == null) "No driver today" else if (coverActive) "Cover today" else "Ready", if (today == null) Brand.Coral else Brand.Seats)
+                Pill(if (today == null) "No driver today" else if (coverActive) "Cover today" else "Ready", if (today == null) Brand.Danger else Brand.Seats)
             }
             Spacer(Modifier.height(8.dp))
         }
@@ -180,7 +180,7 @@ fun FleetScreen(admin: AppUser, vm: AdminViewModel, onBack: () -> Unit) {
                     Text("Temporary cover", style = MaterialTheme.typography.titleSmall)
                     row.bus?.cover?.let { c ->
                         Text("Now: ${nameOf(c.driverId)}, ${c.fromDate} – ${c.untilDate}", style = MaterialTheme.typography.bodySmall)
-                        TextButton(onClick = { vm.clearCover(row); editing = null }) { Text("Remove cover", color = Brand.Coral) }
+                        TextButton(onClick = { vm.clearCover(row); editing = null }) { Text("Remove cover", color = Brand.Danger) }
                     }
                     DriverChips(drivers, coverDriver, allowNobody = false) { coverDriver = it }
                     AppTextField(from, { from = it }, "First day (yyyy-MM-dd)")

@@ -47,8 +47,8 @@ import io.github.shadowfax505.kuetbuslive.ui.components.Pill
 import io.github.shadowfax505.kuetbuslive.ui.theme.Brand
 
 fun ComplaintStatus.color() = when (this) {
-    ComplaintStatus.OPEN -> Brand.Amber
-    ComplaintStatus.IN_REVIEW -> Brand.StudentBus
+    ComplaintStatus.OPEN -> Brand.Danger
+    ComplaintStatus.IN_REVIEW -> Brand.Grey
     ComplaintStatus.RESOLVED -> Brand.Seats
 }
 
@@ -93,7 +93,7 @@ fun ComplaintCard(complaint: Complaint, showSender: Boolean, onClick: (() -> Uni
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(complaint.category.title, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
             if (showSender && !complaint.readByAdmin) {
-                Icon(Icons.Rounded.MarkEmailUnread, "Unread", tint = Brand.Coral)
+                Icon(Icons.Rounded.MarkEmailUnread, "Unread", tint = Brand.Danger)
                 Spacer(Modifier.width(8.dp))
             }
             Pill(complaint.status.title, complaint.status.color())
