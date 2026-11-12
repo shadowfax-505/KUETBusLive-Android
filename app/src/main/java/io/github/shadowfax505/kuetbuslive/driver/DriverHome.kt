@@ -162,6 +162,7 @@ private fun DriverTripScreen(user: AppUser, onProfile: () -> Unit) {
     }
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
+        val panelMaxHeight = maxHeight * 0.6f
         BusMap(
             modifier = Modifier.fillMaxSize(),
             buses = listOfNotNull(me),
@@ -199,7 +200,7 @@ private fun DriverTripScreen(user: AppUser, onProfile: () -> Unit) {
                 WaitingBanner(state.waitingAhead)
             }
             Surface(
-                Modifier.fillMaxWidth().heightIn(max = maxHeight * 0.6f).shadow(24.dp, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)),
+                Modifier.fillMaxWidth().heightIn(max = panelMaxHeight).shadow(24.dp, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)),
                 shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
                 color = MaterialTheme.colorScheme.surface,
             ) {
