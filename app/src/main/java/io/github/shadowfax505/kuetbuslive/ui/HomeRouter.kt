@@ -13,17 +13,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.shadowfax505.kuetbuslive.auth.SessionViewModel
 import io.github.shadowfax505.kuetbuslive.model.AppUser
+import io.github.shadowfax505.kuetbuslive.model.UserRole
+import io.github.shadowfax505.kuetbuslive.rider.RiderHome
 
 // Each role gets its own home: riders the live map, drivers the trip screen,
 // the transport admin the office tools.
 @Composable
 fun HomeRouter(session: SessionViewModel, user: AppUser) {
-    Column(
-        Modifier.fillMaxSize().padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text("Signed in as ${user.name} (${user.role.title})", style = MaterialTheme.typography.titleMedium)
-        TextButton(onClick = { session.signOut() }) { Text("Sign out") }
+    when (user.role) {
+        UserRole.STUDENT, UserRole.TEACHER -> RiderHome(session, user)
+        else -> Column(
+            Modifier.fillMaxSize().padding(32.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text("Signed in as ${user.name} (${user.role.title})", style = MaterialTheme.typography.titleMedium)
+            TextButton(onClick = { session.signOut() }) { Text("Sign out") }
+        }
     }
 }
