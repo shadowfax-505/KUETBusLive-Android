@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -68,7 +69,7 @@ import io.github.shadowfax505.kuetbuslive.ui.theme.Brand
 
 // The brand header on top, a rounded sheet with the form below it.
 @Composable
-private fun AuthLayout(title: String, subtitle: String, content: @Composable () -> Unit) {
+private fun AuthLayout(title: String, subtitle: String, content: @Composable ColumnScope.() -> Unit) {
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(
             Modifier
@@ -200,7 +201,7 @@ fun SignUpScreen(session: SessionViewModel, state: SessionState, onSignIn: () ->
 }
 
 @Composable
-private fun CenteredMessage(content: @Composable () -> Unit) {
+private fun CenteredMessage(content: @Composable ColumnScope.() -> Unit) {
     Box(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding().navigationBarsPadding(),
         contentAlignment = Alignment.Center,
