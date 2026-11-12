@@ -13,6 +13,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,6 +38,7 @@ import androidx.compose.material.icons.rounded.DirectionsBus
 import androidx.compose.material.icons.rounded.EventSeat
 import androidx.compose.material.icons.rounded.GpsFixed
 import androidx.compose.material.icons.rounded.GroupOff
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.NearMe
 import androidx.compose.material.icons.rounded.PanTool
 import androidx.compose.material.icons.rounded.Place
@@ -143,6 +145,7 @@ fun LiveMapScreen(user: AppUser, vm: RiderViewModel, onPickStop: () -> Unit) {
             stops = selectedRoute?.stops?.map { it.position } ?: emptyList(),
             etaPath = etaPath,
             boardingPoint = user.favoriteStop?.position,
+            etaLabel = selected?.let { state.eta[it.id] }?.let { formatMinutes(it.minutes) },
             showUserLocation = hasLocation,
             focus = focus,
             onBusClick = { id ->
@@ -173,39 +176,46 @@ fun LiveMapScreen(user: AppUser, vm: RiderViewModel, onPickStop: () -> Unit) {
     }
 }
 
+// A round avatar on the left and the boarding stop in a centred pill, floating over the map.
 @Composable
 private fun TopBar(user: AppUser, onPickStop: () -> Unit, modifier: Modifier) {
-    Surface(
-        modifier = modifier
+    Box(
+        modifier
             .statusBarsPadding()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .fillMaxWidth()
-            .shadow(14.dp, RoundedCornerShape(22.dp)),
-        shape = RoundedCornerShape(22.dp),
-        color = MaterialTheme.colorScheme.surface,
+            .fillMaxWidth(),
     ) {
-        Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Avatar(user.name, size = 42.dp)
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(greeting() + ", " + user.firstName, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Row(
-                    Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onPickStop).padding(vertical = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(Icons.Rounded.Place, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        user.favoriteStopName?.let { "Boarding at $it" } ?: "Choose your stop",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
+        Surface(
+            modifier = Modifier.align(Alignment.CenterStart).size(48.dp).shadow(10.dp, CircleShape),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surface,
+        ) {
+            Box(contentAlignment = Alignment.Center) { Avatar(user.name, size = 40.dp) }
+        }
+        Surface(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(horizontal = 60.dp)
+                .shadow(10.dp, RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(24.dp))
+                .clickable(onClick = onPickStop),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+        ) {
+            Row(Modifier.padding(start = 14.dp, end = 10.dp, top = 11.dp, bottom = 11.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(9.dp).background(MaterialTheme.colorScheme.onSurface, RoundedCornerShape(2.dp)))
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    user.favoriteStopName?.let { "Boarding at $it" } ?: "${greeting()}, ${user.firstName}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                Spacer(Modifier.width(4.dp))
+                Icon(Icons.Rounded.KeyboardArrowDown, "Change stop", Modifier.size(20.dp))
             }
-            Pill(user.role.title, MaterialTheme.colorScheme.secondary)
         }
     }
 }
@@ -226,6 +236,7 @@ private fun MapButton(icon: androidx.compose.ui.graphics.vector.ImageVector, des
         containerColor = MaterialTheme.colorScheme.surface,
         contentColor = MaterialTheme.colorScheme.onSurface,
         shape = CircleShape,
+        modifier = Modifier.size(48.dp),
     ) {
         Icon(icon, contentDescription = description)
     }
@@ -278,7 +289,7 @@ private fun BusList(
     Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Buses on the road", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-            if (state.buses.isNotEmpty()) Pill("${state.buses.size} live", Brand.Seats)
+            if (state.buses.isNotEmpty()) Pill("${state.buses.size} live", MaterialTheme.colorScheme.onSurface)
         }
         Spacer(Modifier.height(12.dp))
         if (state.buses.isEmpty()) {
@@ -335,17 +346,17 @@ private fun BusRow(bus: Bus, state: RiderState, onClick: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .clip(RoundedCornerShape(18.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp))
             .clickable(onClick = onClick)
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(bus.audience.color()),
+            Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Rounded.DirectionsBus, null, tint = Color.White)
+            Icon(Icons.Rounded.DirectionsBus, null, tint = MaterialTheme.colorScheme.onSurface)
         }
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
@@ -359,7 +370,7 @@ private fun BusRow(bus: Bus, state: RiderState, onClick: () -> Unit) {
             )
             Spacer(Modifier.height(6.dp))
             if (bus.isStale(state.nowMillis)) {
-                Pill("Signal lost · ${bus.lastUpdateText(state.nowMillis)}", Brand.Coral, icon = Icons.Rounded.SignalCellularConnectedNoInternet0Bar)
+                Pill("Signal lost · ${bus.lastUpdateText(state.nowMillis)}", Brand.Danger, icon = Icons.Rounded.SignalCellularConnectedNoInternet0Bar)
             } else {
                 CrowdPill(bus.crowd)
             }
@@ -389,7 +400,7 @@ private fun TripCard(user: AppUser, bus: Bus, state: RiderState, vm: RiderViewMo
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(bus.tripName, style = MaterialTheme.typography.headlineSmall)
+                    Text(bus.tripName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.width(10.dp))
                     AudienceBadge(bus.audience)
                 }
@@ -404,7 +415,8 @@ private fun TripCard(user: AppUser, bus: Bus, state: RiderState, vm: RiderViewMo
 
         Spacer(Modifier.height(14.dp))
         Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(16.dp),
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp))
+                .border(2.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(18.dp)).padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
@@ -445,7 +457,7 @@ private fun TripCard(user: AppUser, bus: Bus, state: RiderState, vm: RiderViewMo
             LinearProgressIndicator(
                 progress = { animatedProgress },
                 modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-                color = bus.audience.color(),
+                color = MaterialTheme.colorScheme.onSurface,
                 trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 drawStopIndicator = {},
             )
