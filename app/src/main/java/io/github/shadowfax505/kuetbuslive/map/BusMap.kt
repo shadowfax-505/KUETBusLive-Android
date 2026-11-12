@@ -39,6 +39,7 @@ fun BusMap(
     stops: List<LatLng> = emptyList(),
     etaPath: List<LatLng> = emptyList(),
     boardingPoint: LatLng? = null,
+    etaLabel: String? = null,
     waves: List<LatLng> = emptyList(),
     showUserLocation: Boolean = false,
     focus: FocusRequest? = null,
@@ -73,7 +74,7 @@ fun BusMap(
                     setAttributionMargins((8 * resources.displayMetrics.density).toInt(), topPx, 0, 0)
                 }
                 map.setStyle(if (dark) BusMapController.STYLE_DARK else BusMapController.STYLE_LIGHT) { style ->
-                    controller = BusMapController(context, map).also {
+                    controller = BusMapController(context, map, dark).also {
                         it.onBusClick = { id -> clickHandler(id) }
                         it.onUserMovedMap = { movedHandler() }
                         it.onStyleLoaded(style)
@@ -117,6 +118,7 @@ fun BusMap(
     LaunchedEffect(c, stops) { c?.setStops(stops) }
     LaunchedEffect(c, etaPath) { c?.setEtaPath(etaPath) }
     LaunchedEffect(c, boardingPoint) { c?.setBoardingPoint(boardingPoint) }
+    LaunchedEffect(c, etaLabel) { c?.setEtaLabel(etaLabel) }
     LaunchedEffect(c, waves) { c?.setWaves(waves) }
     LaunchedEffect(c, showUserLocation) { if (showUserLocation) c?.showUserLocation() }
     LaunchedEffect(c, focus?.key) { focus?.let { c?.focus(it.points, bottomPx) } }

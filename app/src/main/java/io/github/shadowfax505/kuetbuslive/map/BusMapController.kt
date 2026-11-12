@@ -34,12 +34,19 @@ import org.maplibre.android.geometry.LatLng as MapLatLng
 // Drivers send a position about every 5 seconds. Instead of jumping, each bus glides
 // from where it is drawn now to the new fix over roughly the time between fixes, and
 // turns to its new heading over a shorter time, the way a car moves in a ride app.
-class BusMapController(private val context: Context, private val map: MapLibreMap) {
+class BusMapController(
+    private val context: Context,
+    private val map: MapLibreMap,
+    private val dark: Boolean,
+) {
 
     var onBusClick: ((String) -> Unit)? = null
     var onUserMovedMap: (() -> Unit)? = null
 
     private var style: Style? = null
+    // Route and markers are black on the light map and white on the dark one.
+    private val inkColor = if (dark) Color.rgb(242, 242, 242) else Color.rgb(17, 17, 17)
+    private val casingColor = if (dark) Color.rgb(28, 28, 28) else Color.WHITE
     private val animated = mutableMapOf<String, AnimatedBus>()
     private var selectedId: String? = null
     private var followId: String? = null
@@ -76,12 +83,13 @@ class BusMapController(private val context: Context, private val map: MapLibreMa
 
     fun onStyleLoaded(loaded: Style) {
         style = loaded
-        loaded.addImage(ICON_STUDENT, MapIcons.bus(context, STUDENT_COLOR, selected = false))
-        loaded.addImage(ICON_STUDENT_SELECTED, MapIcons.bus(context, STUDENT_COLOR, selected = true))
-        loaded.addImage(ICON_TEACHER, MapIcons.bus(context, TEACHER_COLOR, selected = false))
-        loaded.addImage(ICON_TEACHER_SELECTED, MapIcons.bus(context, TEACHER_COLOR, selected = true))
-        loaded.addImage(ICON_BOARDING, MapIcons.boardingPoint(context, BOARDING_COLOR))
-        loaded.addImage(ICON_WAVE, MapIcons.wave(context))
+        loaded.addImage(ICON_STUDENT, MapIcons.bus(context, teacher = false, selected = false, dark = dark))
+        loaded.addImage(ICON_STUDENT_SELECTED, MapIcons.bus(context, teacher = false, selected = true, dark = dark))
+        loaded.addImage(ICON_TEACHER, MapIcons.bus(context, teacher = true, selected = false, dark = dark))
+        loaded.addImage(ICON_TEACHER_SELECTED, MapIcons.bus(context, teacher = true, selected = true, dark = dark))
+        loaded.addImage(ICON_BOARDING, MapIcons.boardingPoint(context, dark))
+        loaded.addImage(ICON_WAVE, MapIcons.wave(context, dark))
+        loaded.addImage(ICON_PILL, MapIcons.pill(context, " ", dark))
 
         listOf(SRC_ROUTE, SRC_ETA, SRC_STOPS, SRC_BOARDING, SRC_WAVES, SRC_BUSES).forEach {
             loaded.addSource(GeoJsonSource(it, FeatureCollection.fromFeatures(emptyList())))
@@ -89,35 +97,36 @@ class BusMapController(private val context: Context, private val map: MapLibreMa
 
         loaded.addLayer(
             LineLayer(LAYER_ROUTE_CASING, SRC_ROUTE).withProperties(
-                PropertyFactory.lineColor(Color.WHITE),
-                PropertyFactory.lineWidth(9f),
-                PropertyFactory.lineOpacity(0.9f),
+                PropertyFactory.lineColor(casingColor),
+                PropertyFactory.lineWidth(8f),
+                PropertyFactory.lineOpacity(0.95f),
                 PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
                 PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
             )
         )
         loaded.addLayer(
             LineLayer(LAYER_ROUTE, SRC_ROUTE).withProperties(
-                PropertyFactory.lineColor(ROUTE_COLOR),
-                PropertyFactory.lineWidth(5f),
+                PropertyFactory.lineColor(inkColor),
+                PropertyFactory.lineWidth(4.5f),
                 PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
                 PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
             )
         )
         loaded.addLayer(
             LineLayer(LAYER_ETA, SRC_ETA).withProperties(
-                PropertyFactory.lineColor(ETA_COLOR),
-                PropertyFactory.lineWidth(4.5f),
+                PropertyFactory.lineColor(inkColor),
+                PropertyFactory.lineOpacity(0.55f),
+                PropertyFactory.lineWidth(4f),
                 PropertyFactory.lineDasharray(arrayOf(0.1f, 1.8f)),
                 PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
             )
         )
         loaded.addLayer(
             CircleLayer(LAYER_STOPS, SRC_STOPS).withProperties(
-                PropertyFactory.circleRadius(5f),
-                PropertyFactory.circleColor(Color.WHITE),
-                PropertyFactory.circleStrokeColor(ROUTE_COLOR),
-                PropertyFactory.circleStrokeWidth(2.5f),
+                PropertyFactory.circleRadius(4.5f),
+                PropertyFactory.circleColor(casingColor),
+                PropertyFactory.circleStrokeColor(inkColor),
+                PropertyFactory.circleStrokeWidth(2f),
             )
         )
         loaded.addLayer(
@@ -134,12 +143,23 @@ class BusMapController(private val context: Context, private val map: MapLibreMa
                 PropertyFactory.iconIgnorePlacement(true),
             )
         )
+        // The ETA label floats just above the boarding point.
+        loaded.addLayer(
+            SymbolLayer(LAYER_PILL, SRC_BOARDING).withProperties(
+                PropertyFactory.iconImage(ICON_PILL),
+                PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM),
+                PropertyFactory.iconOffset(arrayOf(0f, -10f)),
+                PropertyFactory.iconAllowOverlap(true),
+                PropertyFactory.iconIgnorePlacement(true),
+                PropertyFactory.visibility(Property.NONE),
+            )
+        )
         // A soft halo under the selected bus.
         loaded.addLayer(
             CircleLayer(LAYER_HALO, SRC_BUSES).withProperties(
                 PropertyFactory.circleRadius(30f),
-                PropertyFactory.circleColor(Expression.get(PROP_COLOR)),
-                PropertyFactory.circleOpacity(0.18f),
+                PropertyFactory.circleColor(inkColor),
+                PropertyFactory.circleOpacity(0.12f),
                 PropertyFactory.circleBlur(0.4f),
                 PropertyFactory.circlePitchAlignment(Property.CIRCLE_PITCH_ALIGNMENT_MAP),
             ).withFilter(Expression.eq(Expression.get(PROP_SELECTED), Expression.literal(true)))
@@ -258,7 +278,6 @@ class BusMapController(private val context: Context, private val map: MapLibreMa
                 addStringProperty(PROP_ID, id)
                 addNumberProperty(PROP_BEARING, bus.bearing(now))
                 addBooleanProperty(PROP_SELECTED, selected)
-                addStringProperty(PROP_COLOR, if (bus.audience == BusAudience.TEACHER) "#8B5CF6" else "#2F6BFF")
                 addStringProperty(
                     PROP_ICON,
                     when {
@@ -284,6 +303,18 @@ class BusMapController(private val context: Context, private val map: MapLibreMa
     fun setBoardingPoint(point: LatLng?) = setPoints(SRC_BOARDING, listOfNotNull(point))
 
     fun setWaves(points: List<LatLng>) = setPoints(SRC_WAVES, points)
+
+    // Shows a label such as "4 min" above the boarding point, or hides it when null.
+    fun setEtaLabel(text: String?) {
+        val loaded = style ?: return
+        val layer = loaded.getLayer(LAYER_PILL) ?: return
+        if (text.isNullOrBlank()) {
+            layer.setProperties(PropertyFactory.visibility(Property.NONE))
+            return
+        }
+        loaded.addImage(ICON_PILL, MapIcons.pill(context, text, dark))
+        layer.setProperties(PropertyFactory.visibility(Property.VISIBLE))
+    }
 
     private fun setLine(sourceId: String, path: List<LatLng>) {
         val source = style?.getSourceAs<GeoJsonSource>(sourceId) ?: return
@@ -344,11 +375,6 @@ class BusMapController(private val context: Context, private val map: MapLibreMa
         // A jump this big is a new trip or lost signal: place the bus without gliding.
         private const val TELEPORT_METRES = 2_000.0
 
-        private val STUDENT_COLOR = Color.rgb(47, 107, 255)
-        private val TEACHER_COLOR = Color.rgb(139, 92, 246)
-        private val ROUTE_COLOR = Color.rgb(15, 138, 114)
-        private val ETA_COLOR = Color.rgb(11, 27, 58)
-        private val BOARDING_COLOR = Color.rgb(15, 138, 114)
 
         private const val SRC_ROUTE = "route"
         private const val SRC_ETA = "eta"
@@ -363,6 +389,7 @@ class BusMapController(private val context: Context, private val map: MapLibreMa
         private const val LAYER_STOPS = "stops"
         private const val LAYER_WAVES = "waves"
         private const val LAYER_BOARDING = "boarding"
+        private const val LAYER_PILL = "eta-pill"
         private const val LAYER_HALO = "bus-halo"
         private const val LAYER_BUSES = "buses"
 
@@ -372,11 +399,11 @@ class BusMapController(private val context: Context, private val map: MapLibreMa
         private const val ICON_TEACHER_SELECTED = "bus-teacher-selected"
         private const val ICON_BOARDING = "boarding"
         private const val ICON_WAVE = "wave"
+        private const val ICON_PILL = "eta-pill"
 
         private const val PROP_ID = "id"
         private const val PROP_ICON = "icon"
         private const val PROP_BEARING = "bearing"
         private const val PROP_SELECTED = "selected"
-        private const val PROP_COLOR = "color"
     }
 }
