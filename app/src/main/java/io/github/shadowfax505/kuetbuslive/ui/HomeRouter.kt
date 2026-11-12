@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import io.github.shadowfax505.kuetbuslive.auth.SessionViewModel
 import io.github.shadowfax505.kuetbuslive.model.AppUser
 import io.github.shadowfax505.kuetbuslive.model.UserRole
+import io.github.shadowfax505.kuetbuslive.driver.DriverHome
 import io.github.shadowfax505.kuetbuslive.rider.RiderHome
 
 // Each role gets its own home: riders the live map, drivers the trip screen,
@@ -22,6 +23,7 @@ import io.github.shadowfax505.kuetbuslive.rider.RiderHome
 fun HomeRouter(session: SessionViewModel, user: AppUser) {
     when (user.role) {
         UserRole.STUDENT, UserRole.TEACHER -> RiderHome(session, user)
+        UserRole.DRIVER -> DriverHome(session, user)
         else -> Column(
             Modifier.fillMaxSize().padding(32.dp),
             verticalArrangement = Arrangement.Center,
