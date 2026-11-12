@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Front view of a campus bus with a location pin, inside the adaptive icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Wheels -->
+    <path android:fillColor="#0B1B3A" android:pathData="M38,70h7v8a2,2 0,0 1,-2 2h-3a2,2 0,0 1,-2 -2z" />
+    <path android:fillColor="#0B1B3A" android:pathData="M63,70h7v8a2,2 0,0 1,-2 2h-3a2,2 0,0 1,-2 -2z" />
+    <!-- Mirrors -->
+    <path android:fillColor="#F2F5F9" android:pathData="M32,44h3v8h-3z" />
+    <path android:fillColor="#F2F5F9" android:pathData="M73,44h3v8h-3z" />
+    <!-- Body -->
+    <path android:fillColor="#FFFFFF" android:pathData="M42,34h24a8,8 0,0 1,8 8v26a5,5 0,0 1,-5 5h-30a5,5 0,0 1,-5 -5v-26a8,8 0,0 1,8 -8z" />
+    <!-- Sign -->
+    <path android:fillColor="#0F8A72" android:pathData="M45,37h18a2,2 0,0 1,2 2v1a2,2 0,0 1,-2 2h-18a2,2 0,0 1,-2 -2v-1a2,2 0,0 1,2 -2z" />
+    <!-- Windscreen -->
+    <path android:fillColor="#13254A" android:pathData="M41,45h26a2,2 0,0 1,2 2v9a2,2 0,0 1,-2 2h-26a2,2 0,0 1,-2 -2v-9a2,2 0,0 1,2 -2z" />
+    <path android:fillColor="#33FFFFFF" android:pathData="M43,46h5l-4,11h-2z" />
+    <!-- Stripe and lights -->
+    <path android:fillColor="#FFC94A" android:pathData="M34,60h40v3h-40z" />
+    <path android:fillColor="#FFC94A" android:pathData="M42,67.5m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path android:fillColor="#FFC94A" android:pathData="M66,67.5m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path android:fillColor="#D5DCE6" android:pathData="M49,66h10v3h-10z" />
+    <!-- Pin -->
+    <path android:fillColor="#FF5A4E" android:pathData="M72,22c-4.4,0 -8,3.5 -8,7.9c0,5.6 8,13.1 8,13.1s8,-7.5 8,-13.1c0,-4.4 -3.6,-7.9 -8,-7.9z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M72,30m-2.8,0a2.8,2.8 0,1 1,5.6 0a2.8,2.8 0,1 1,-5.6 0" />
+</vector>

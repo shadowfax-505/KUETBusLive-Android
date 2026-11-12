@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KUET Bus Live</string>
+    <string name="tagline">See your campus bus move, know when it reaches your stop, and take the right bus every time.</string>
+    <string name="setup_needed_title">Firebase setup needed</string>
+    <string name="setup_needed_body">Add app/google-services.json from the kuetbuslive Firebase project, then build again.</string>
+    <string name="trip_channel_name">Live trip</string>
+    <string name="trip_channel_description">Shown while your bus position is being shared.</string>
+    <string name="arrival_channel_name">Bus arriving</string>
+    <string name="arrival_channel_description">Tells you when your bus is a few minutes away.</string>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KUET Bus Live</string>
+    <string name="tagline">ক্যাম্পাস বাস চলতে দেখুন, কখন আপনার স্টপে পৌঁছাবে জানুন, আর প্রতিবার সঠিক বাসে উঠুন।</string>
+    <string name="setup_needed_title">Firebase সেটআপ দরকার</string>
+    <string name="setup_needed_body">kuetbuslive Firebase প্রজেক্ট থেকে app/google-services.json যোগ করে আবার বিল্ড করুন।</string>
+    <string name="trip_channel_name">লাইভ ট্রিপ</string>
+    <string name="trip_channel_description">আপনার বাসের অবস্থান শেয়ার হওয়ার সময় দেখানো হয়।</string>
+    <string name="arrival_channel_name">বাস আসছে</string>
+    <string name="arrival_channel_description">আপনার বাস কয়েক মিনিট দূরে থাকলে জানায়।</string>
+</resources>
