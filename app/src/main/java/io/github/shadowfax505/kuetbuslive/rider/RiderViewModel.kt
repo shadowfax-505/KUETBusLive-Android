@@ -114,7 +114,7 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
         started = true
         SpecialDays.start()
         viewModelScope.launch {
-            Repository.buses().collect { all ->
+            Repository.buses(onlyStudentBuses = user.role == UserRole.STUDENT).collect { all ->
                 val role = this@RiderViewModel.user?.role ?: UserRole.STUDENT
                 val visible = all.filter { it.audience.canBoard(role) }
                 _state.update { s ->

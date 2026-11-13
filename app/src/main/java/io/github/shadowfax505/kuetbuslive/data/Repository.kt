@@ -8,6 +8,7 @@ import io.github.shadowfax505.kuetbuslive.model.AbsenceStatus
 import io.github.shadowfax505.kuetbuslive.model.Announcement
 import io.github.shadowfax505.kuetbuslive.model.AppUser
 import io.github.shadowfax505.kuetbuslive.model.Bus
+import io.github.shadowfax505.kuetbuslive.model.BusAudience
 import io.github.shadowfax505.kuetbuslive.model.BusCover
 import io.github.shadowfax505.kuetbuslive.model.BusRoute
 import io.github.shadowfax505.kuetbuslive.model.BusSchedule
@@ -105,7 +106,12 @@ object Repository {
 
     // ---------- Live buses ----------
 
-    fun buses(): Flow<List<Bus>> = db.collection("buses").live { it.toBus() }
+    // Students may only read student buses (the rules check it), so they ask only for those.
+    fun buses(onlyStudentBuses: Boolean): Flow<List<Bus>> {
+        val all = db.collection("buses")
+        val query = if (onlyStudentBuses) all.whereEqualTo("audience", BusAudience.STUDENT.raw) else all
+        return query.live { it.toBus() }
+    }
 
     // A rider on board reports the bus overcrowded. The rules accept only "full", the
     // server's time, and a rider position within about 100 m of the bus.
