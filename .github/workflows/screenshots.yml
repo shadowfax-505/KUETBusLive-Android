@@ -8,6 +8,9 @@ on:
   push:
     branches: [screenshots]
 
+permissions:
+  contents: write
+
 jobs:
   screenshots:
     runs-on: ubuntu-latest
@@ -62,3 +65,18 @@ jobs:
             screenshots/
             instrument.log
             .github/showcase/emulators.log
+
+      # Also keep the pictures in git, on the screenshots branch, for the README.
+      - name: Save the pictures on the screenshots branch
+        if: always()
+        run: |
+          [ -n "$(ls screenshots/*.png 2>/dev/null)" ] || exit 0
+          git config user.name "Muttakin Rahman Shoscho"
+          git config user.email "143033286+shadowfax-505@users.noreply.github.com"
+          git fetch origin screenshots
+          git checkout -B screenshots origin/screenshots
+          mkdir -p docs/screenshots/android
+          cp screenshots/*.png screenshots/log.txt instrument.log docs/screenshots/android/ 2>/dev/null || true
+          git add docs/screenshots/android
+          git commit -m "Update the Android screenshots" || exit 0
+          git push origin screenshots
