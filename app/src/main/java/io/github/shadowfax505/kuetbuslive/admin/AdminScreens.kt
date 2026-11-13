@@ -155,6 +155,10 @@ fun FleetScreen(admin: AppUser, vm: AdminViewModel, onBack: () -> Unit) {
                     row.bus?.cover?.let { c ->
                         Text("Cover: ${nameOf(c.driverId)}, ${c.fromDate} – ${c.untilDate}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
+                    val tripCount = row.bus?.tripDrivers?.size ?: 0
+                    if (tripCount > 0) {
+                        Text("Trip drivers: $tripCount", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
                 Pill(if (today == null) "No driver today" else if (coverActive) "Cover today" else "Ready", if (today == null) Brand.Danger else Brand.Seats)
             }
@@ -186,6 +190,15 @@ fun FleetScreen(admin: AppUser, vm: AdminViewModel, onBack: () -> Unit) {
                     AppTextField(from, { from = it }, "First day (yyyy-MM-dd)")
                     AppTextField(until, { until = it }, "Last day (yyyy-MM-dd)")
                     AppTextField(reason, { reason = it }, "Reason")
+                    if (row.trips.isNotEmpty()) {
+                        Text("Trip drivers (optional)", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 6.dp))
+                        Text("Give a single trip to another driver. \"Usual\" means the regular or cover driver.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        row.trips.forEach { trip ->
+                            val current = (fleet.firstOrNull { it.id == row.id } ?: row).bus?.tripDrivers?.get(trip.id)
+                            Text("${trip.days.title} · ${Timetable.display(trip.campusTime)} · ${trip.spot}", style = MaterialTheme.typography.labelLarge)
+                            DriverChips(drivers, current, allowNobody = true, nobodyLabel = "Usual") { vm.setTripDriver(row, trip.id, it) }
+                        }
+                    }
                 }
             },
             confirmButton = {
@@ -223,9 +236,9 @@ fun FleetScreen(admin: AppUser, vm: AdminViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun DriverChips(drivers: List<AppUser>, selected: String?, allowNobody: Boolean, onSelect: (String?) -> Unit) {
+private fun DriverChips(drivers: List<AppUser>, selected: String?, allowNobody: Boolean, nobodyLabel: String = "Nobody", onSelect: (String?) -> Unit) {
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (allowNobody) FilterChip(selected == null, { onSelect(null) }, { Text("Nobody") })
+        if (allowNobody) FilterChip(selected == null, { onSelect(null) }, { Text(nobodyLabel) })
         drivers.forEach { d -> FilterChip(selected == d.id, { onSelect(d.id) }, { Text(d.name) }) }
     }
 }

@@ -7,6 +7,7 @@ import io.github.shadowfax505.kuetbuslive.model.AbsenceStatus
 import io.github.shadowfax505.kuetbuslive.model.AppUser
 import io.github.shadowfax505.kuetbuslive.model.BusAssignment
 import io.github.shadowfax505.kuetbuslive.model.BusSchedule
+import io.github.shadowfax505.kuetbuslive.model.Timetable
 import io.github.shadowfax505.kuetbuslive.model.Complaint
 import io.github.shadowfax505.kuetbuslive.model.DriverAbsence
 import io.github.shadowfax505.kuetbuslive.model.FleetBus
@@ -21,7 +22,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 // One fleet bus as the office sees it: the bus document (if it exists yet) and its trips.
-data class FleetRow(val id: String, val name: String, val bus: FleetBus?)
+data class FleetRow(val id: String, val name: String, val bus: FleetBus?, val trips: List<BusSchedule> = emptyList())
 
 // The transport office's tools: approvals, the fleet and its drivers, absences and complaints.
 class AdminViewModel : ViewModel() {
@@ -44,7 +45,9 @@ class AdminViewModel : ViewModel() {
         val names = (schedules.map { it.tripName } + buses.map { it.name }).distinct().sorted()
         names.map { name ->
             val id = BusAssignment.fleetId(name)
-            FleetRow(id, name, buses.firstOrNull { it.id == id })
+            val trips = schedules.filter { it.tripName == name }
+                .sortedWith(compareBy({ it.days.ordinal }, { Timetable.minutes(it.campusTime) ?: 0 }))
+            FleetRow(id, name, buses.firstOrNull { it.id == id }, trips)
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -82,6 +85,12 @@ class AdminViewModel : ViewModel() {
             ?: throw IllegalArgumentException("Dates look like 2026-11-14.")
         if (row.bus == null) Repository.setDefaultDriver(row.id, row.name, null)
         Repository.setCover(row.id, cover)
+    }
+
+    // A different driver for one trip, or null for the bus's usual driver.
+    fun setTripDriver(row: FleetRow, scheduleId: String, driverId: String?) = run("Trip driver saved.") {
+        if (driverId == null && row.bus == null) return@run
+        Repository.setTripDriver(row.id, row.name, scheduleId, driverId)
     }
 
     fun clearCover(row: FleetRow) = run("Cover removed.") { Repository.setCover(row.id, null) }
