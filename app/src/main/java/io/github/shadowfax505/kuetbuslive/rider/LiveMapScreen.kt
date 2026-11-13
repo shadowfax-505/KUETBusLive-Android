@@ -44,6 +44,8 @@ import androidx.compose.material.icons.rounded.PanTool
 import androidx.compose.material.icons.rounded.Place
 import androidx.compose.material.icons.rounded.SignalCellularConnectedNoInternet0Bar
 import androidx.compose.material.icons.rounded.Speed
+import androidx.compose.material.icons.rounded.TrendingDown
+import androidx.compose.material.icons.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.ZoomOutMap
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -73,6 +75,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.shadowfax505.kuetbuslive.map.BusMap
 import io.github.shadowfax505.kuetbuslive.map.BusMapController
@@ -108,6 +111,12 @@ fun LiveMapScreen(user: AppUser, vm: RiderViewModel, onPickStop: () -> Unit) {
     }
 
     LaunchedEffect(user.id) { vm.start(user) }
+    // The rider's position is used only while the map is on screen.
+    LifecycleStartEffect(hasLocation) {
+        vm.setMapVisible(true)
+        onStopOrDispose { vm.setMapVisible(false) }
+    }
+    var pickingDestination by remember { mutableStateOf(false) }
     LaunchedEffect(user) { vm.updateUser(user) }
     LaunchedEffect(Unit) {
         // Location for the blue dot, notifications for "your bus is close". Both optional.
@@ -144,7 +153,8 @@ fun LiveMapScreen(user: AppUser, vm: RiderViewModel, onPickStop: () -> Unit) {
             routePath = selectedPath,
             stops = selectedRoute?.stops?.map { it.position } ?: emptyList(),
             etaPath = etaPath,
-            boardingPoint = user.favoriteStop?.position,
+            // Where the plan says to wait, once there is one; otherwise the rider's stop.
+            boardingPoint = state.catchPlan?.takeIf { state.onBoardBusId != selected?.id }?.point?.position ?: user.favoriteStop?.position,
             etaLabel = selected?.let { state.eta[it.id] }?.let { formatMinutes(it.minutes) },
             showUserLocation = hasLocation,
             focus = focus,
@@ -167,12 +177,25 @@ fun LiveMapScreen(user: AppUser, vm: RiderViewModel, onPickStop: () -> Unit) {
                     focus = FocusRequest(points.ifEmpty { listOf(BusMapController.KUET) })
                 }
             }
-            BottomPanel(user, state, vm, onPickStop, onFocusBus = { bus ->
+            BottomPanel(user, state, vm, onPickStop, onWhereTo = { pickingDestination = true }, onFocusBus = { bus ->
                 focus = FocusRequest(listOfNotNull(bus.position, user.favoriteStop?.position))
             })
         }
 
         SnackbarHost(snackbar, Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 80.dp))
+    }
+
+    if (pickingDestination) {
+        DestinationSheet(
+            stops = remember(state.routes, state.buses.size) { vm.destinations() },
+            onPick = { vm.setDestination(it); pickingDestination = false },
+            onDismiss = { pickingDestination = false },
+        )
+    }
+    val destination = state.destination
+    val options = state.options
+    if (destination != null && options != null) {
+        CompareSheet(destination, options, onDismiss = { vm.closeOptions() })
     }
 }
 
@@ -248,6 +271,7 @@ private fun BottomPanel(
     state: RiderState,
     vm: RiderViewModel,
     onPickStop: () -> Unit,
+    onWhereTo: () -> Unit,
     onFocusBus: (Bus) -> Unit,
 ) {
     Surface(
@@ -271,7 +295,7 @@ private fun BottomPanel(
                 if (bus == null) {
                     BusList(user, state, vm, onPickStop, onFocusBus)
                 } else {
-                    TripCard(user, bus, state, vm, onPickStop)
+                    TripCard(user, bus, state, vm, onPickStop, onWhereTo)
                 }
             }
         }
@@ -387,7 +411,7 @@ private fun BusRow(bus: Bus, state: RiderState, onClick: () -> Unit) {
 }
 
 @Composable
-private fun TripCard(user: AppUser, bus: Bus, state: RiderState, vm: RiderViewModel, onPickStop: () -> Unit) {
+private fun TripCard(user: AppUser, bus: Bus, state: RiderState, vm: RiderViewModel, onPickStop: () -> Unit, onWhereTo: () -> Unit) {
     val eta = state.eta[bus.id]
     val stop = user.favoriteStop
     val progress = vm.progressFor(bus)
@@ -467,6 +491,42 @@ private fun TripCard(user: AppUser, bus: Bus, state: RiderState, vm: RiderViewMo
                 Spacer(Modifier.weight(1f))
                 Text(stop.name, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+        }
+
+        // Today's pace against the usual, once it clearly differs.
+        if (!bus.isStale(state.nowMillis) && kotlin.math.abs(state.liveFactor - 1) >= 0.15) {
+            Spacer(Modifier.height(10.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    if (state.liveFactor > 1) Icons.Rounded.TrendingDown else Icons.Rounded.TrendingUp, null,
+                    Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    if (state.liveFactor > 1) "Slower than usual today" else "Faster than usual today",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        // Where to wait and where to get off, from the learned travel times.
+        if (user.role.isRider) {
+            Spacer(Modifier.height(14.dp))
+            PlanCard(
+                catchPlan = state.catchPlan,
+                dropPlan = state.dropPlan,
+                destination = state.destination,
+                canBoard = bus.audience.canBoard(user.role),
+                waving = state.wavingAtBusId == bus.id,
+                stopRequested = state.requestedBusId == bus.id,
+                onWave = { vm.wave(bus, it) },
+                onWhereTo = onWhereTo,
+                onRequestStop = { vm.requestStop(bus) },
+                onCancelStop = { vm.cancelStop() },
+                onCompare = { vm.compare() },
+                onClearDestination = { vm.setDestination(null) },
+            )
         }
 
         // Crowding is shown softly, for 10 minutes after a rider on board reported it.
