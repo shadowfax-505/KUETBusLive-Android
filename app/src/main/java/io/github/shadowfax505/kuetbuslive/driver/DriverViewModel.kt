@@ -36,6 +36,8 @@ data class DriverState(
     val absences: List<DriverAbsence> = emptyList(),
     val routePath: List<LatLng> = emptyList(),
     val waitingAhead: List<WaitingRider> = emptyList(),
+    // Riders who asked the bus to stop where they get off, nearest first.
+    val gettingOffAhead: List<WaitingRider> = emptyList(),
     val message: String? = null,
 )
 
@@ -48,6 +50,7 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
     private var started = false
     private var wavesJob: Job? = null
     private var waves: List<Wave> = emptyList()
+    private var dropoffs: List<Wave> = emptyList()
     private var pathRouteId: String? = null
 
     fun start(user: AppUser) {
@@ -65,8 +68,8 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                 val trip = status.trip
                 if (trip != null && wavesJob == null) listenToWaves(trip.busDocId)
                 if (trip == null && wavesJob != null) {
-                    wavesJob?.cancel(); wavesJob = null; waves = emptyList()
-                    _state.update { it.copy(waitingAhead = emptyList()) }
+                    wavesJob?.cancel(); wavesJob = null; waves = emptyList(); dropoffs = emptyList()
+                    _state.update { it.copy(waitingAhead = emptyList(), gettingOffAhead = emptyList()) }
                 }
                 updateWaitingAhead(status.position)
             }
@@ -122,9 +125,18 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
 
     private fun listenToWaves(busDocId: String) {
         wavesJob = viewModelScope.launch {
-            Repository.waves(busDocId).collect { list ->
-                waves = list
-                updateWaitingAhead(TripTracker.state.value.position)
+            launch {
+                Repository.waves(busDocId).collect { list ->
+                    waves = list
+                    updateWaitingAhead(TripTracker.state.value.position)
+                }
+            }
+            // "Please stop here": riders getting off ahead.
+            launch {
+                Repository.dropoffs(busDocId).collect { list ->
+                    dropoffs = list
+                    updateWaitingAhead(TripTracker.state.value.position)
+                }
             }
         }
     }
@@ -135,7 +147,9 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
         val trip = TripTracker.state.value.trip
         val path = _state.value.routePath
         if (position == null || trip == null || path.size < 2) {
-            if (_state.value.waitingAhead.isNotEmpty()) _state.update { it.copy(waitingAhead = emptyList()) }
+            if (_state.value.waitingAhead.isNotEmpty() || _state.value.gettingOffAhead.isNotEmpty()) {
+                _state.update { it.copy(waitingAhead = emptyList(), gettingOffAhead = emptyList()) }
+            }
             return
         }
         val now = System.currentTimeMillis()
@@ -150,7 +164,20 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
         }
         ahead.sortBy { it.metresAhead }
         if (ahead.size > _state.value.waitingAhead.size) alert()
-        _state.update { it.copy(waitingAhead = ahead) }
+
+        // Requests to get off: passed or expired ones are removed.
+        val off = mutableListOf<WaitingRider>()
+        for (request in dropoffs) {
+            val metres = Geo.metresAhead(position, request.position, path) ?: 0.0
+            if (!request.isActive(now) || metres < -PASSED_METRES) {
+                viewModelScope.launch { Repository.cancelDropoff(trip.busDocId, request.uid) }
+            } else {
+                off += WaitingRider(request, metres.coerceAtLeast(0.0))
+            }
+        }
+        off.sortBy { it.metresAhead }
+        if (off.size > _state.value.gettingOffAhead.size) alert()
+        _state.update { it.copy(waitingAhead = ahead, gettingOffAhead = off) }
     }
 
     private fun alert() {

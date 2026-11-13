@@ -21,12 +21,33 @@ import com.google.android.gms.location.Priority
 import io.github.shadowfax505.kuetbuslive.KuetBusApp
 import io.github.shadowfax505.kuetbuslive.MainActivity
 import io.github.shadowfax505.kuetbuslive.R
+import io.github.shadowfax505.kuetbuslive.data.Osrm
 import io.github.shadowfax505.kuetbuslive.data.Repository
+import io.github.shadowfax505.kuetbuslive.data.SpecialDays
+import io.github.shadowfax505.kuetbuslive.data.StatsStore
+import io.github.shadowfax505.kuetbuslive.model.GpsSample
 import io.github.shadowfax505.kuetbuslive.model.LatLng
+import io.github.shadowfax505.kuetbuslive.model.RouteLine
+import io.github.shadowfax505.kuetbuslive.model.RouteTiming
+import io.github.shadowfax505.kuetbuslive.model.SeenWave
+import io.github.shadowfax505.kuetbuslive.model.SegmentProfile
+import io.github.shadowfax505.kuetbuslive.model.StatKey
+import io.github.shadowfax505.kuetbuslive.model.TimeBucket
+import io.github.shadowfax505.kuetbuslive.model.TripLearner
+import io.github.shadowfax505.kuetbuslive.model.Wave
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 // Shares the bus position while a trip runs, also with the screen off. Android shows
 // an ongoing notification for it, with a button to end the trip.
+//
+// It also keeps this trip's own GPS track (a point every 2 s) and the waves the driver
+// saw. When the trip ends, the track becomes a few numbers for the shared travel model
+// (TripLearner, StatsStore), saved before the bus is removed because the rules accept
+// them only while the bus is running. The track itself never leaves the phone.
 class TripLocationService : LifecycleService() {
 
     private val client by lazy { LocationServices.getFusedLocationProviderClient(this) }
@@ -34,6 +55,13 @@ class TripLocationService : LifecycleService() {
     private var created = false
     private var tripRecordId: String? = null
     private var sending = false
+    private val samples = mutableListOf<GpsSample>()
+    private val seenWaves = mutableMapOf<String, SeenWave>()
+    private var wavesJob: Job? = null
+    private var waves: List<Wave> = emptyList()
+    private var dropoffs: List<Wave> = emptyList()
+    // The model's numbers from before this trip, to check this trip's predictions.
+    private var profileBefore: SegmentProfile = SegmentProfile.EMPTY
 
     private val callback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
@@ -41,6 +69,10 @@ class TripLocationService : LifecycleService() {
             val heading = if (location.hasBearing() && location.speed > 0.5f) location.bearing.toDouble() else null
             val speed = if (location.hasSpeed()) location.speed.toDouble() else null
             val position = LatLng(location.latitude, location.longitude)
+            val accurate = !location.hasAccuracy() || location.accuracy < 50f
+            if (accurate && (samples.isEmpty() || location.time - samples.last().millis >= SAMPLE_MILLIS)) {
+                samples += GpsSample(location.time, position, if (location.hasSpeed()) location.speed.toDouble() else null)
+            }
             TripTracker.moved(position, heading, speed)
             send(position, heading, speed)
         }
@@ -62,10 +94,27 @@ class TripLocationService : LifecycleService() {
             if (Build.VERSION.SDK_INT >= 29) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0,
         )
         startUpdates()
+        samples.clear()
+        seenWaves.clear()
+        SpecialDays.start()
         lifecycleScope.launch {
             tripRecordId = runCatching {
                 Repository.recordTripStart(trip.driverId, trip.fleetBusId, trip.schedule.id, trip.route.id)
             }.getOrNull()
+        }
+        lifecycleScope.launch {
+            StatsStore.load(trip.route.id, trip.driverId, force = true)
+            profileBefore = StatsStore.profile(trip.route.id)
+        }
+        // Every wave seen on this trip, for "does this driver stop for waves".
+        wavesJob = lifecycleScope.launch {
+            launch {
+                Repository.waves(trip.busDocId).collect { list ->
+                    waves = list
+                    list.forEach { w -> seenWaves.getOrPut(w.uid) { SeenWave(w.position, w.createdAtMillis) } }
+                }
+            }
+            launch { Repository.dropoffs(trip.busDocId).collect { dropoffs = it } }
         }
         return START_NOT_STICKY
     }
@@ -117,15 +166,54 @@ class TripLocationService : LifecycleService() {
         val trip = TripTracker.state.value.trip
         stopUpdates()
         TripTracker.ended()
+        wavesJob?.cancel()
         if (trip != null) {
             lifecycleScope.launch {
-                runCatching { Repository.endLiveBus(trip.busDocId) }
-                tripRecordId?.let { id -> runCatching { Repository.recordTripEnd(id) } }
+                withContext(NonCancellable) {
+                    tripRecordId?.let { id -> runCatching { Repository.recordTripEnd(id) } }
+                    // Leave no waves or stop requests behind.
+                    waves.forEach { Repository.deleteWave(trip.busDocId, it.uid) }
+                    dropoffs.forEach { Repository.cancelDropoff(trip.busDocId, it.uid) }
+                    // The numbers first: the rules accept them only while the bus is running.
+                    if (created) withTimeoutOrNull(UPLOAD_TIMEOUT_MILLIS) { learnFromTrip(trip) }
+                    runCatching { Repository.endLiveBus(trip.busDocId) }
+                }
                 stopSelf()
             }
         } else {
             stopSelf()
         }
+    }
+
+    // Turns this trip's track into stretch times, stop times and wave outcomes, and saves them.
+    private suspend fun learnFromTrip(trip: ActiveTrip) {
+        val track = samples.toList()
+        val seen = seenWaves.values.toList()
+        samples.clear()
+        seenWaves.clear()
+        val stops = trip.route.stops.map { it.position }
+        if (track.size < 2 || stops.size < 2) return
+        val path = runCatching { Osrm.path(trip.route.id, stops) }.getOrDefault(stops)
+        val line = RouteLine(trip.route.id, path, stops)
+        val observations = TripLearner.learn(track, line, seen)
+        // What the model would have said when the bus left, against what really happened.
+        val started = observations.departedAtMillis ?: System.currentTimeMillis()
+        val timing = RouteTiming(
+            if (observations.reversed) line.flipped() else line,
+            profileBefore,
+            TimeBucket.of(started, SpecialDays.kindOn(started)),
+            trip.driverId,
+        )
+        val errors = TripLearner.predictionErrors(observations, timing)
+        // Trips from KUET follow the campus time; trips back follow the city spot's time.
+        val scheduled = if (observations.reversed) trip.schedule.spotTime else trip.schedule.campusTime
+        val late = TripLearner.lateness(observations.departedAtMillis, scheduled)?.let {
+            (StatKey.letter(observations.reversed) + trip.schedule.id) to it
+        }
+        StatsStore.upload(
+            observations, trip.route.id, trip.busDocId, trip.driverId,
+            specialKindAt = { SpecialDays.kindOn(it) }, late = late, errors = errors,
+        )
     }
 
     private fun stopUpdates() {
@@ -159,6 +247,9 @@ class TripLocationService : LifecycleService() {
     companion object {
         private const val NOTIFICATION_ID = 42
         private const val SEND_INTERVAL_MILLIS = 5_000L
+        private const val SAMPLE_MILLIS = 2_000L
+        // Ending a trip waits at most this long for the numbers to be saved.
+        private const val UPLOAD_TIMEOUT_MILLIS = 8_000L
         private const val ACTION_END = "end_trip"
 
         fun start(context: Context, trip: ActiveTrip) {

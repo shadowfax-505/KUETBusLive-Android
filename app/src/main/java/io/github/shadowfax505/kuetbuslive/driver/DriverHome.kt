@@ -32,6 +32,7 @@ import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.DirectionsBus
 import androidx.compose.material.icons.rounded.PanTool
+import androidx.compose.material.icons.rounded.WhereToVote
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.Warning
@@ -172,7 +173,7 @@ private fun DriverTripScreen(user: AppUser, onProfile: () -> Unit) {
             followBusId = if (active != null && me != null) "me" else null,
             routePath = state.routePath,
             stops = route?.stops?.map { it.position } ?: emptyList(),
-            waves = state.waitingAhead.map { it.wave.position },
+            waves = state.waitingAhead.map { it.wave.position } + state.gettingOffAhead.map { it.wave.position },
             showUserLocation = active == null &&
                 ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED,
             focus = focus,
@@ -201,6 +202,9 @@ private fun DriverTripScreen(user: AppUser, onProfile: () -> Unit) {
         Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
             AnimatedVisibility(active != null && state.waitingAhead.isNotEmpty()) {
                 WaitingBanner(state.waitingAhead)
+            }
+            AnimatedVisibility(active != null && state.gettingOffAhead.isNotEmpty()) {
+                WaitingBanner(state.gettingOffAhead, gettingOff = true)
             }
             Surface(
                 Modifier.fillMaxWidth().heightIn(max = panelMaxHeight).shadow(24.dp, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)),
@@ -314,7 +318,7 @@ private fun myBusText(user: AppUser, bus: io.github.shadowfax505.kuetbuslive.mod
 
 // Big and simple, so it can be read at a glance while driving.
 @Composable
-private fun WaitingBanner(waiting: List<WaitingRider>) {
+private fun WaitingBanner(waiting: List<WaitingRider>, gettingOff: Boolean = false) {
     val nearest = waiting.first()
     Row(
         Modifier
@@ -327,11 +331,19 @@ private fun WaitingBanner(waiting: List<WaitingRider>) {
             .padding(18.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Rounded.PanTool, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(32.dp))
+        Icon(
+            if (gettingOff) Icons.Rounded.WhereToVote else Icons.Rounded.PanTool, null,
+            tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(32.dp),
+        )
         Spacer(Modifier.width(14.dp))
         Column {
             Text(
-                if (waiting.size == 1) "1 rider waiting ahead" else "${waiting.size} riders waiting ahead",
+                when {
+                    gettingOff && waiting.size == 1 -> "1 getting off ahead"
+                    gettingOff -> "${waiting.size} getting off ahead"
+                    waiting.size == 1 -> "1 rider waiting ahead"
+                    else -> "${waiting.size} riders waiting ahead"
+                },
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onPrimary,
             )
