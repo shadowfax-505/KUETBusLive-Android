@@ -1,6 +1,16 @@
 package io.github.shadowfax505.kuetbuslive.rider
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Application
+import android.content.pm.PackageManager
+import android.os.Looper
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.shadowfax505.kuetbuslive.data.Osrm
@@ -14,6 +24,7 @@ import io.github.shadowfax505.kuetbuslive.model.BusSchedule
 import io.github.shadowfax505.kuetbuslive.model.CrowdLevel
 import io.github.shadowfax505.kuetbuslive.model.Geo
 import io.github.shadowfax505.kuetbuslive.model.LatLng
+import io.github.shadowfax505.kuetbuslive.model.OnBoardDetector
 import io.github.shadowfax505.kuetbuslive.model.Stop
 import io.github.shadowfax505.kuetbuslive.model.UserRole
 import io.github.shadowfax505.kuetbuslive.model.Wave
@@ -35,6 +46,8 @@ data class RiderState(
     val selectedBusId: String? = null,
     val followBusId: String? = null,
     val wavingAtBusId: String? = null,
+    // The selected bus, once the rider has been on it for a minute: only then can they report it crowded.
+    val onBoardBusId: String? = null,
     val message: String? = null,
     val nowMillis: Long = System.currentTimeMillis(),
 ) {
@@ -56,6 +69,17 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
     private var started = false
     private val lastEtaFetch = mutableMapOf<String, Long>()
     private val alerted = mutableSetOf<String>()
+    private val onBoard = OnBoardDetector()
+    private val locationClient = LocationServices.getFusedLocationProviderClient(application)
+    private var riderPosition: LatLng? = null
+    private var tracking = false
+    private val locationCallback = object : LocationCallback() {
+        override fun onLocationResult(result: LocationResult) {
+            val fix = result.lastLocation ?: return
+            riderPosition = LatLng(fix.latitude, fix.longitude)
+            checkOnBoard()
+        }
+    }
 
     fun start(user: AppUser) {
         this.user = user
@@ -79,6 +103,7 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 visible.forEach { loadRoutePath(it.routeId) }
                 refreshAllEtas(force = false)
+                updateTracking()
             }
         }
         viewModelScope.launch {
@@ -113,6 +138,7 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
 
     fun select(busId: String?) {
         _state.update { it.copy(selectedBusId = busId, followBusId = if (busId == null) null else it.followBusId) }
+        updateTracking()
         busId?.let { id -> _state.value.buses.firstOrNull { it.id == id }?.let { refreshEta(it, force = true) } }
     }
 
@@ -189,12 +215,53 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
 
     // ---------- Crowd and waves ----------
 
-    fun reportCrowd(bus: Bus, crowd: CrowdLevel) {
+    // Only riders found on board can report a bus overcrowded, from where they are.
+    fun reportCrowded(bus: Bus) {
+        val here = riderPosition
+        if (_state.value.onBoardBusId != bus.id || here == null) {
+            _state.update { it.copy(message = "You can report this once you're on the bus.") }
+            return
+        }
         viewModelScope.launch {
-            runCatching { Repository.reportCrowd(bus.id, crowd) }
-                .onSuccess { _state.update { it.copy(message = "Thanks! Crowd report sent.") } }
+            runCatching { Repository.reportCrowded(bus.id, here.lat, here.lng) }
+                .onSuccess { _state.update { it.copy(message = "Thanks! Others will see this bus is crowded.") } }
                 .onFailure { _state.update { it.copy(message = "Could not send the report. Check your connection.") } }
         }
+    }
+
+    // ---------- On board ----------
+
+    // The rider's position is followed only while a bus is selected, every 5 seconds.
+    @SuppressLint("MissingPermission")
+    private fun updateTracking() {
+        val want = _state.value.selectedBusId != null && hasLocationPermission()
+        if (want && !tracking) {
+            tracking = true
+            val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5_000L).setMinUpdateIntervalMillis(3_000L).build()
+            runCatching { locationClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper()) }
+                .onFailure { tracking = false }
+        } else if (!want && tracking) {
+            tracking = false
+            locationClient.removeLocationUpdates(locationCallback)
+            riderPosition = null
+            onBoard.reset()
+            _state.update { it.copy(onBoardBusId = null) }
+        }
+    }
+
+    private fun hasLocationPermission(): Boolean =
+        ContextCompat.checkSelfPermission(getApplication(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+    private fun checkOnBoard() {
+        val bus = _state.value.selectedBus
+        val on = onBoard.update(riderPosition, bus, System.currentTimeMillis())
+        val id = if (on) bus?.id else null
+        if (id != _state.value.onBoardBusId) _state.update { it.copy(onBoardBusId = id) }
+    }
+
+    override fun onCleared() {
+        if (tracking) locationClient.removeLocationUpdates(locationCallback)
+        super.onCleared()
     }
 
     // Tells the driver where this rider waits, for 15 minutes. One wave at a time.

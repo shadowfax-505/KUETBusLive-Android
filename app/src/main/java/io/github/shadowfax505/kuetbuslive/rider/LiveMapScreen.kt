@@ -371,8 +371,8 @@ private fun BusRow(bus: Bus, state: RiderState, onClick: () -> Unit) {
             Spacer(Modifier.height(6.dp))
             if (bus.isStale(state.nowMillis)) {
                 Pill("Signal lost · ${bus.lastUpdateText(state.nowMillis)}", Brand.Danger, icon = Icons.Rounded.SignalCellularConnectedNoInternet0Bar)
-            } else {
-                CrowdPill(bus.crowd)
+            } else if (bus.isCrowded(state.nowMillis)) {
+                CrowdPill(CrowdLevel.FULL)
             }
         }
         Column(horizontalAlignment = Alignment.End) {
@@ -469,21 +469,30 @@ private fun TripCard(user: AppUser, bus: Bus, state: RiderState, vm: RiderViewMo
             }
         }
 
-        Spacer(Modifier.height(14.dp))
-        Text("How full is it?", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            CrowdPill(bus.crowd)
-            Spacer(Modifier.weight(1f))
-            OutlinedButton(onClick = { vm.reportCrowd(bus, CrowdLevel.SEATS) }, shape = RoundedCornerShape(14.dp)) {
-                Icon(Icons.Rounded.EventSeat, null, Modifier.size(18.dp), tint = Brand.Seats)
-                Spacer(Modifier.width(6.dp))
-                Text("Seats")
-            }
-            OutlinedButton(onClick = { vm.reportCrowd(bus, CrowdLevel.FULL) }, shape = RoundedCornerShape(14.dp)) {
-                Icon(Icons.Rounded.GroupOff, null, Modifier.size(18.dp), tint = Brand.Full)
-                Spacer(Modifier.width(6.dp))
-                Text("Full")
+        // Crowding is shown softly, for 10 minutes after a rider on board reported it.
+        val crowded = bus.isCrowded(state.nowMillis)
+        val onBoard = state.onBoardBusId == bus.id
+        if (crowded || onBoard) {
+            Spacer(Modifier.height(14.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (crowded) {
+                    val ago = bus.crowdedMinutesAgo(state.nowMillis)
+                    Text(
+                        if (ago == 0) "Riders say it's crowded · just now" else "Riders say it's crowded · $ago min ago",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                } else {
+                    Text("You're on this bus", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                }
+                if (onBoard) {
+                    OutlinedButton(onClick = { vm.reportCrowded(bus) }, shape = RoundedCornerShape(14.dp)) {
+                        Icon(Icons.Rounded.GroupOff, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("It's overcrowded")
+                    }
+                }
             }
         }
 
