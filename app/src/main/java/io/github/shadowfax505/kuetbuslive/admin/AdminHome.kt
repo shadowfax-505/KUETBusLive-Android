@@ -9,6 +9,7 @@ import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Campaign
 import androidx.compose.material.icons.rounded.DirectionsBus
+import androidx.compose.material.icons.rounded.EventNote
 import androidx.compose.material.icons.rounded.Feedback
 import androidx.compose.material.icons.rounded.HowToReg
 import androidx.compose.material.icons.rounded.Map
@@ -67,6 +68,7 @@ fun AdminHome(session: SessionViewModel, user: AppUser) {
 
     when (page) {
         "fleet" -> { FleetScreen(user, admin, onBack = { page = null }); return }
+        "special" -> { SpecialDaysScreen(onBack = { page = null }); return }
         "complaints" -> { ComplaintsInboxScreen(admin, campus, onBack = { page = null }); return }
         "news" -> { NewsScreen(user, campus, onBack = { page = null }); return }
         "profile" -> {
@@ -85,6 +87,7 @@ fun AdminHome(session: SessionViewModel, user: AppUser) {
                 AdminTab.APPROVALS -> ApprovalsScreen(admin)
                 AdminTab.MORE -> Page("More") {
                     item { SettingRow(Icons.Rounded.DirectionsBus, "Drivers & buses", "Regular drivers, covers and absences") { page = "fleet" } }
+                    item { SettingRow(Icons.Rounded.EventNote, "Special days", "Exams, holidays and events") { page = "special" } }
                     item { SettingRow(Icons.Rounded.Feedback, "Complaints", if (unread > 0) "$unread unread" else "All read") { page = "complaints" } }
                     item { SettingRow(Icons.Rounded.Campaign, "News", "Post to every rider") { page = "news" } }
                     item { SettingRow(Icons.Rounded.AccountCircle, "Profile", user.email) { page = "profile" } }
