@@ -1,9 +1,12 @@
 name: Screenshots
 
 # Renders the main screens on an emulator with made-up data (Firebase emulators,
-# no real project) and uploads the pictures. Run it by hand from the Actions tab.
+# no real project) and uploads the pictures. Run it by hand from the Actions tab,
+# or by pushing to the "screenshots" branch.
 on:
   workflow_dispatch:
+  push:
+    branches: [screenshots]
 
 jobs:
   screenshots:
