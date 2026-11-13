@@ -119,10 +119,13 @@ private fun DriverTripScreen(user: AppUser, onProfile: () -> Unit) {
     LaunchedEffect(trip.error) { trip.error?.let { snackbar.showSnackbar(it); TripTracker.clearError() } }
 
     val now = System.currentTimeMillis()
-    val myBus = vm.myBus(user, now)
-    val choices = vm.tripChoices(myBus, now)
+    val dayBus = vm.myBus(user, now)
+    val tripChoices = vm.tripChoices(user, now)
+    val choices = tripChoices.map { it.second }
     val active = trip.trip
     val schedule = active?.schedule ?: choices.firstOrNull { it.id == selectedScheduleId } ?: choices.firstOrNull()
+    // The bus of the chosen trip: usually my own bus, or another bus for a single trip.
+    val myBus = tripChoices.firstOrNull { it.second.id == schedule?.id }?.first ?: dayBus
     // Routes whose name mentions the trip's spot come first; the driver can pick any.
     val routes = state.routes.sortedByDescending { schedule != null && it.name.contains(schedule.spot, ignoreCase = true) }
     val route = active?.route ?: routes.firstOrNull { it.id == selectedRouteId } ?: routes.firstOrNull()
@@ -188,7 +191,7 @@ private fun DriverTripScreen(user: AppUser, onProfile: () -> Unit) {
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(myBusText(user, myBus, now), style = MaterialTheme.typography.titleMedium)
+                    Text(myBusText(user, dayBus ?: myBus, now), style = MaterialTheme.typography.titleMedium)
                     Text(trip.status, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 IconButton(onClick = onProfile) { Icon(Icons.Rounded.AccountCircle, "Profile") }
@@ -220,7 +223,7 @@ private fun DriverTripScreen(user: AppUser, onProfile: () -> Unit) {
                         SectionTitle("Trip")
                         if (choices.isEmpty()) {
                             Text(
-                                if (myBus == null) "Ask the transport office to assign you a bus." else "No trips in the timetable for ${myBus.name}.",
+                                if (myBus == null) "Ask the transport office to assign you a bus or a trip." else "No trips in the timetable for ${myBus.name}.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -230,7 +233,10 @@ private fun DriverTripScreen(user: AppUser, onProfile: () -> Unit) {
                                 FilterChip(
                                     selected = s.id == schedule?.id,
                                     onClick = { selectedScheduleId = s.id },
-                                    label = { Text("${Timetable.display(s.campusTime)} · ${s.spot}") },
+                                    label = {
+                                        val onOtherBus = dayBus != null && s.tripName != dayBus.name
+                                        Text("${Timetable.display(s.campusTime)} · ${s.spot}" + if (onOtherBus || dayBus == null) " · ${s.tripName}" else "")
+                                    },
                                     shape = RoundedCornerShape(14.dp),
                                 )
                             }

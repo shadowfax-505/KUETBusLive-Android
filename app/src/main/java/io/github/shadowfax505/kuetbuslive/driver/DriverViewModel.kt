@@ -76,13 +76,10 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
     fun myBus(user: AppUser, now: Long = System.currentTimeMillis()): FleetBus? =
         BusAssignment.busFor(user.id, _state.value.fleet, now)
 
-    // Today's trips of my bus. On a day with no buses (Friday) all its trips are listed.
-    fun tripChoices(bus: FleetBus?, now: Long = System.currentTimeMillis()): List<BusSchedule> {
-        bus ?: return emptyList()
-        val mine = _state.value.schedules.filter { it.tripName == bus.name }.sortedBy { Timetable.minutes(it.campusTime) ?: 0 }
-        val today = mine.filter { Timetable.runsOn(it, now) }
-        return today.ifEmpty { mine }
-    }
+    // The trips I drive today, on my own bus and any single trips given to me on other
+    // buses. On a day with no buses (Friday) the whole week is listed.
+    fun tripChoices(user: AppUser, now: Long = System.currentTimeMillis()): List<Pair<FleetBus, BusSchedule>> =
+        BusAssignment.tripsFor(user.id, _state.value.fleet, _state.value.schedules, now)
 
     fun loadPath(route: BusRoute?) {
         if (route == null || route.id == pathRouteId) return
