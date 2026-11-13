@@ -217,6 +217,17 @@ object Repository {
             .await()
     }
 
+    // A different driver for one trip of this bus, or null to give the trip back to the
+    // bus's usual (cover or regular) driver. Same field as the iOS app: tripDrivers.<scheduleId>.
+    suspend fun setTripDriver(fleetBusId: String, busName: String, scheduleId: String, driverId: String?) {
+        val ref = db.collection("fleet").document(fleetBusId)
+        if (driverId != null) {
+            ref.set(mapOf("name" to busName, "tripDrivers" to mapOf(scheduleId to driverId)), com.google.firebase.firestore.SetOptions.merge()).await()
+        } else {
+            ref.update(com.google.firebase.firestore.FieldPath.of("tripDrivers", scheduleId), FieldValue.delete()).await()
+        }
+    }
+
     fun myAbsences(driverId: String): Flow<List<DriverAbsence>> =
         db.collection("driverAbsences").whereEqualTo("driverId", driverId).live { it.toAbsence() }
 

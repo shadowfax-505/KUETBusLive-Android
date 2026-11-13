@@ -214,6 +214,8 @@ data class FleetBus(
     val name: String,          // "Normal-1"
     val defaultDriverId: String?,
     val cover: BusCover?,
+    // A different driver for single trips: schedule document ID -> driver uid. Usually empty.
+    val tripDrivers: Map<String, String> = emptyMap(),
 )
 
 enum class AbsenceStatus(val raw: String) {

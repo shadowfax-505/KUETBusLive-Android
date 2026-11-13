@@ -145,7 +145,11 @@ fun DocumentSnapshot.toFleetBus(): FleetBus? {
             setBy = map["setBy"] as? String ?: "",
         )
     }
-    return FleetBus(id, name, str("defaultDriverId"), cover)
+    @Suppress("UNCHECKED_CAST")
+    val tripDrivers = (get("tripDrivers") as? Map<String, Any?>)
+        ?.mapNotNull { (scheduleId, driverId) -> (driverId as? String)?.let { scheduleId to it } }
+        ?.toMap() ?: emptyMap()
+    return FleetBus(id, name, str("defaultDriverId"), cover, tripDrivers)
 }
 
 fun BusCover.toMap(): Map<String, Any> = mapOf(
