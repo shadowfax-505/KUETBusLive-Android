@@ -17,6 +17,7 @@ import io.github.shadowfax505.kuetbuslive.model.ComplaintStatus
 import io.github.shadowfax505.kuetbuslive.model.CrowdLevel
 import io.github.shadowfax505.kuetbuslive.model.DriverAbsence
 import io.github.shadowfax505.kuetbuslive.model.FleetBus
+import io.github.shadowfax505.kuetbuslive.model.SpecialDay
 import io.github.shadowfax505.kuetbuslive.model.UserRole
 import io.github.shadowfax505.kuetbuslive.model.Wave
 import kotlinx.coroutines.channels.awaitClose
@@ -141,6 +142,42 @@ object Repository {
 
     suspend fun deleteWave(busId: String, uid: String) {
         runCatching { db.collection("buses").document(busId).collection("waves").document(uid).delete().await() }
+    }
+
+    // ---------- "Please stop here" (same fields as a wave, up to 2 hours) ----------
+
+    suspend fun sendDropoff(busId: String, uid: String, label: String, lat: Double, lng: Double) {
+        val now = System.currentTimeMillis()
+        val data = mapOf(
+            "uid" to uid,
+            "label" to label.take(60),
+            "lat" to lat,
+            "lng" to lng,
+            "createdAt" to now.toTimestamp(),
+            "expiresAt" to (now + Wave.DROPOFF_LIFETIME_MILLIS).toTimestamp(),
+        )
+        db.collection("buses").document(busId).collection("dropoffs").document(uid).set(data).await()
+    }
+
+    suspend fun cancelDropoff(busId: String, uid: String) {
+        runCatching { db.collection("buses").document(busId).collection("dropoffs").document(uid).delete().await() }
+    }
+
+    fun dropoffs(busId: String): Flow<List<Wave>> =
+        db.collection("buses").document(busId).collection("dropoffs").live { it.toWave() }
+
+    // ---------- Special days (exams, holidays, events) ----------
+
+    fun specialDays(): Flow<List<SpecialDay>> = db.collection("specialDays").live { d ->
+        d.getString("kind")?.let { SpecialDay(d.id, it, d.getString("note") ?: "") }
+    }
+
+    suspend fun saveSpecialDay(day: String, kind: String, note: String) {
+        db.collection("specialDays").document(day).set(mapOf("kind" to kind, "note" to note.take(100))).await()
+    }
+
+    suspend fun deleteSpecialDay(day: String) {
+        db.collection("specialDays").document(day).delete().await()
     }
 
     // ---------- Driver trips ----------
