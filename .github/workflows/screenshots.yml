@@ -54,7 +54,7 @@ jobs:
           arch: x86_64
           profile: pixel_7
           disable-animations: true
-          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          emulator-options: -no-snapshot -no-window -gpu swangle_indirect -noaudio -no-boot-anim
           script: ./.github/scripts/screenshots.sh
 
       - uses: actions/upload-artifact@v4

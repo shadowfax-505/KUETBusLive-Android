@@ -1,6 +1,7 @@
 package io.github.shadowfax505.kuetbuslive.data
 
 import io.github.shadowfax505.kuetbuslive.model.LatLng
+import android.util.Log
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.math.ceil
@@ -24,6 +25,7 @@ data class RouteInfo(
 object Osrm {
     private const val BASE_URL = "https://router.project-osrm.org/route/v1/driving/"
     const val REFRESH_MILLIS = 30_000L
+    private const val TAG = "Osrm"
 
     private val pathCache = mutableMapOf<String, List<LatLng>>()
 
@@ -39,13 +41,16 @@ object Osrm {
                 setRequestProperty("User-Agent", "KUETBusLive-Android")
             }
             try {
-                if (connection.responseCode != 200) return@runCatching null
+                if (connection.responseCode != 200) {
+                    Log.w(TAG, "Routing server answered ${connection.responseCode}")
+                    return@runCatching null
+                }
                 val body = connection.inputStream.bufferedReader().use { it.readText() }
                 parse(body)
             } finally {
                 connection.disconnect()
             }
-        }.getOrNull()
+        }.onFailure { Log.w(TAG, "Routing failed: ${it.message}") }.getOrNull()
     }
 
     // The road path through a route's stops, fetched once per route.
