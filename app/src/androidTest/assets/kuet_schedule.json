@@ -1,0 +1,285 @@
+{
+  "source": "https://www.kuet.ac.bd/transport",
+  "updated": "November 2026",
+  "trips": [
+    {
+      "tripName": "Normal-1",
+      "days": "sunToThu",
+      "period": "morning",
+      "campusTime": "06:30",
+      "spot": "Rupsha",
+      "spotTime": "07:10",
+      "remarks": "Will back via Royal Mor & Ferighat"
+    },
+    {
+      "tripName": "Normal-1",
+      "days": "sunToThu",
+      "period": "morning",
+      "campusTime": "06:30",
+      "spot": "Gollamari",
+      "spotTime": "07:10",
+      "remarks": "Will back via Moylapota, Shibbari, Sonadanga and Notun Rasta"
+    },
+    {
+      "tripName": "Normal-1",
+      "days": "sunToThu",
+      "period": "morning",
+      "campusTime": "07:00",
+      "spot": "Rupsha",
+      "spotTime": "08:00",
+      "remarks": "Will round residential area (7:00 AM)"
+    },
+    {
+      "tripName": "Normal-1",
+      "days": "sunToThu",
+      "period": "morning",
+      "campusTime": "07:20",
+      "spot": "Moylapota",
+      "spotTime": "08:00",
+      "remarks": "Will back via Nirala-Gollamari-Sonadanga-Notun Rasta"
+    },
+    {
+      "tripName": "Normal-1",
+      "days": "sunToThu",
+      "period": "morning",
+      "campusTime": "07:20",
+      "spot": "Sonadanga",
+      "spotTime": "08:10",
+      "remarks": "Will back via Boyra Bazar-Notun Rasta"
+    },
+    {
+      "tripName": "Normal-1",
+      "days": "sunToThu",
+      "period": "morning",
+      "campusTime": "07:25",
+      "spot": "Royal Mor",
+      "spotTime": "08:00",
+      "remarks": "Will back via Shibbari, Joragate, Alamnagar, Platinum Mor, Notun Rasta"
+    },
+    {
+      "tripName": "Normal-1",
+      "days": "sunToThu",
+      "period": "morning",
+      "campusTime": "07:25",
+      "spot": "Fultala Bazar",
+      "spotTime": "08:10",
+      "remarks": "Will back via Pother Bazar-Afilgate-Shiromoni Bazar"
+    },
+    {
+      "tripName": "Special-1",
+      "days": "sunToThu",
+      "period": "morning",
+      "campusTime": "07:15",
+      "spot": "Gollamari",
+      "spotTime": "08:05",
+      "remarks": "Will back via Moylapota, Shibbari, Sonadanga and Notun Rasta"
+    },
+    {
+      "tripName": "Special-1",
+      "days": "sunToThu",
+      "period": "morning",
+      "campusTime": "07:15",
+      "spot": "Rupsha",
+      "spotTime": "08:05",
+      "remarks": "Will back via Royal Mor and Shibbari"
+    },
+    {
+      "tripName": "Special-1 (AC)",
+      "days": "sunToThu",
+      "period": "morning",
+      "campusTime": "07:20",
+      "spot": "Moylapota",
+      "spotTime": "08:10",
+      "remarks": "Will back via Nirala-Gollamari-Sonadanga-Shibbari-Sonadanga-Boyra Bazar-College Mor-Notun Rasta"
+    },
+    {
+      "tripName": "Special-1 (AC)",
+      "days": "sunToThu",
+      "period": "morning",
+      "campusTime": "07:20",
+      "spot": "Rupsha",
+      "spotTime": "08:10",
+      "remarks": "Will back via Royal Mor and Shibbari"
+    },
+    {
+      "tripName": "Normal-1",
+      "days": "sunToThu",
+      "period": "noon",
+      "campusTime": "13:15",
+      "spot": "Shibbari",
+      "spotTime": "14:05",
+      "remarks": "Will go and back Ferighat"
+    },
+    {
+      "tripName": "Normal-1",
+      "days": "sunToThu",
+      "period": "noon",
+      "campusTime": "13:15",
+      "spot": "Sonadanga",
+      "spotTime": "14:05",
+      "remarks": "Back via Notun Rasta-Boyra Bazar"
+    },
+    {
+      "tripName": "Normal-1",
+      "days": "sunToThu",
+      "period": "noon",
+      "campusTime": "13:15",
+      "spot": "Rupsha",
+      "spotTime": "14:00",
+      "remarks": "Will go and back directly"
+    },
+    {
+      "tripName": "Special-1",
+      "days": "sunToThu",
+      "period": "noon",
+      "campusTime": "13:15",
+      "spot": "Rupsha",
+      "spotTime": "14:20",
+      "remarks": "Will go and back via Moylapota-Powerhouse Mor (Powerhouse Mor 2:30 PM)"
+    },
+    {
+      "tripName": "Special-1",
+      "days": "sunToThu",
+      "period": "noon",
+      "campusTime": "13:15",
+      "spot": "Gollamari",
+      "spotTime": "14:25",
+      "remarks": "Will back via Boyra Bazar-Sonadanga-Moylapota"
+    },
+    {
+      "tripName": "Special-1 (AC)",
+      "days": "sunToThu",
+      "period": "noon",
+      "campusTime": "13:15",
+      "spot": "Rupsha",
+      "spotTime": "14:20",
+      "remarks": "Will back via Goalkhali-Abu Naser-Boyra Bazar-College Mor-Shibbari-Sonadanga-Gollamari-Moylapota"
+    },
+    {
+      "tripName": "Normal-2",
+      "days": "sunToThu",
+      "period": "afternoon",
+      "campusTime": "16:00",
+      "spot": "Shibbari",
+      "spotTime": "16:30",
+      "remarks": "Will go and back directly"
+    },
+    {
+      "tripName": "Normal-1",
+      "days": "sunToThu",
+      "period": "afternoon",
+      "campusTime": "17:10",
+      "spot": "Shibbari",
+      "spotTime": "19:00",
+      "remarks": "Will go and back Ferighat"
+    },
+    {
+      "tripName": "Normal-2",
+      "days": "sunToThu",
+      "period": "afternoon",
+      "campusTime": "17:10",
+      "spot": "Shibbari",
+      "spotTime": "19:30",
+      "remarks": "Will go Rupsha"
+    },
+    {
+      "tripName": "Normal-2",
+      "days": "sunToThu",
+      "period": "afternoon",
+      "campusTime": "17:10",
+      "spot": "Shibbari",
+      "spotTime": "18:30",
+      "remarks": "Will go Notun Rasta-Boyra Bazar-Gollamari-Moylapota-Ferighat"
+    },
+    {
+      "tripName": "Normal-1",
+      "days": "sunToThu",
+      "period": "afternoon",
+      "campusTime": "17:10",
+      "spot": "Shibbari",
+      "spotTime": "18:30",
+      "remarks": "Will go Ferighat via Notun Rasta, Platinum Mor, Alamnagar, Joragate"
+    },
+    {
+      "tripName": "Normal-1",
+      "days": "sunToThu",
+      "period": "afternoon",
+      "campusTime": "17:10",
+      "spot": "Fultala Bazar",
+      "spotTime": "18:30",
+      "remarks": "Will go via Shiromoni-Afil Gate-Pother Bazar"
+    },
+    {
+      "tripName": "Special-1",
+      "days": "sunToThu",
+      "period": "afternoon",
+      "campusTime": "17:10",
+      "spot": "Shibbari",
+      "spotTime": "20:30",
+      "remarks": "Will go Notun Rasta-Boyra Bazar-Sonadanga-Gollamari-Nirala-Moylapota-Ferighat"
+    },
+    {
+      "tripName": "Special-1",
+      "days": "sunToThu",
+      "period": "afternoon",
+      "campusTime": "17:10",
+      "spot": "Shibbari",
+      "spotTime": "19:30",
+      "remarks": "Will go Powerhouse Mor-Moylapota-Rupsha"
+    },
+    {
+      "tripName": "Special-1 (AC)",
+      "days": "sunToThu",
+      "period": "afternoon",
+      "campusTime": "17:10",
+      "spot": "Shibbari",
+      "spotTime": "18:30",
+      "remarks": "Back via Notun Rasta-Boyra Bazar-Sonadanga-Shibbari-Sonadanga-Gollamari-Nirala"
+    },
+    {
+      "tripName": "Special-1 (AC)",
+      "days": "sunToThu",
+      "period": "afternoon",
+      "campusTime": "17:10",
+      "spot": "Shibbari",
+      "spotTime": "19:30",
+      "remarks": "Back to Rupsha via Powerhouse Mor-Moylapota"
+    },
+    {
+      "tripName": "Normal-2",
+      "days": "sunToThu",
+      "period": "night",
+      "campusTime": "19:00",
+      "spot": "Shibbari",
+      "spotTime": "21:00",
+      "remarks": "Starts from KUET Mosque-Ferighat"
+    },
+    {
+      "tripName": "Normal-1",
+      "days": "sunToThu",
+      "period": "night",
+      "campusTime": "19:00",
+      "spot": "Shibbari",
+      "spotTime": "20:30",
+      "remarks": "Go via Notun Rasta-Sonadanga-Nirala-Moylapota-Ferighat"
+    },
+    {
+      "tripName": "Normal-2",
+      "days": "saturday",
+      "period": "morning",
+      "campusTime": "09:30",
+      "spot": "Shibbari",
+      "spotTime": "12:30",
+      "remarks": "One goes directly to Ferighat, another via Sonadanga-Ferighat"
+    },
+    {
+      "tripName": "Special-1",
+      "days": "saturday",
+      "period": "morning",
+      "campusTime": "09:30",
+      "spot": "Shibbari",
+      "spotTime": "12:30",
+      "remarks": "Will round residential area to Ferighat"
+    }
+  ]
+}

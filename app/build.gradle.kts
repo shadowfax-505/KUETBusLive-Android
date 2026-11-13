@@ -20,6 +20,8 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
+        // Runs the screenshot tour against the local Firebase emulators.
+        testInstrumentationRunner = "io.github.shadowfax505.kuetbuslive.ShowcaseRunner"
     }
 
     buildTypes {
@@ -76,4 +78,11 @@ dependencies {
     implementation(libs.maplibre)
 
     testImplementation(libs.junit)
+
+    androidTestImplementation(libs.androidx.test.ext)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.rules)
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(libs.compose.ui.test.manifest)
 }
