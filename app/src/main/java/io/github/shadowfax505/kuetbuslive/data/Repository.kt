@@ -106,8 +106,17 @@ object Repository {
 
     fun buses(): Flow<List<Bus>> = db.collection("buses").live { it.toBus() }
 
-    suspend fun reportCrowd(busId: String, crowd: CrowdLevel) {
-        db.collection("buses").document(busId).update("crowd", crowd.raw).await()
+    // A rider on board reports the bus overcrowded. The rules accept only "full", the
+    // server's time, and a rider position within about 100 m of the bus.
+    suspend fun reportCrowded(busId: String, riderLat: Double, riderLng: Double) {
+        db.collection("buses").document(busId).update(
+            mapOf(
+                "crowd" to CrowdLevel.FULL.raw,
+                "crowdAt" to FieldValue.serverTimestamp(),
+                "reportLat" to riderLat,
+                "reportLng" to riderLng,
+            )
+        ).await()
     }
 
     suspend fun sendWave(busId: String, uid: String, label: String, lat: Double, lng: Double) {

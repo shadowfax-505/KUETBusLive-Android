@@ -127,6 +127,7 @@ fun DocumentSnapshot.toBus(): Bus? {
         fleetBusId = str("fleetBusId"),
         heading = dbl("heading"),
         speed = dbl("speed"),
+        crowdAtMillis = millis("crowdAt"),
     )
 }
 

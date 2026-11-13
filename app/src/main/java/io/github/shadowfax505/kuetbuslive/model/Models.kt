@@ -63,7 +63,7 @@ enum class CrowdLevel(val raw: String) {
         get() = when (this) {
             UNKNOWN -> "No report yet"
             SEATS -> "Seats available"
-            FULL -> "Full"
+            FULL -> "Crowded"
         }
 
     companion object {
@@ -181,14 +181,25 @@ data class Bus(
     val fleetBusId: String?,
     val heading: Double?,      // degrees from north
     val speed: Double?,        // metres per second
+    val crowdAtMillis: Long? = null,   // server time of the last "overcrowded" report
 ) {
     val position: LatLng get() = LatLng(lat, lng)
+
+    // "Crowded" is shown for 10 minutes after a rider on board reported it, as on iOS.
+    fun isCrowded(nowMillis: Long): Boolean =
+        crowd == CrowdLevel.FULL && crowdAtMillis != null && nowMillis - crowdAtMillis < CROWDED_FOR_MILLIS
+
+    fun crowdedMinutesAgo(nowMillis: Long): Int = (((nowMillis - (crowdAtMillis ?: nowMillis)) / 60_000).toInt()).coerceAtLeast(0)
 
     // "Normal-2" from "Normal-2 · Rupsha".
     val tripName: String get() = number.substringBefore(" · ")
     val spot: String get() = number.substringAfter(" · ", "")
 
     val speedKmh: Int? get() = speed?.takeIf { it >= 0 }?.let { (it * 3.6).toInt() }
+
+    companion object {
+        const val CROWDED_FOR_MILLIS = 10 * 60 * 1000L
+    }
 
     // No position for a minute usually means the driver lost signal.
     fun isStale(nowMillis: Long = System.currentTimeMillis()): Boolean = nowMillis - updatedAtMillis > 60_000
