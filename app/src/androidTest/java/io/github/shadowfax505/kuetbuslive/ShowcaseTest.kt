@@ -123,7 +123,9 @@ class ShowcaseTest {
         }
         await(batch.commit())
 
-        await(db.collection("fleet").document("normal-1").set(mapOf("name" to "Normal-1", "defaultDriverId" to uids.getValue("driver"))))
+        await(db.collection("fleet").document("normal-1").set(mapOf("name" to "Normal-1")))
+        // Normal-2 runs every day, Saturdays included, so the driver always has trips to show.
+        await(db.collection("fleet").document("normal-2").set(mapOf("name" to "Normal-2", "defaultDriverId" to uids.getValue("driver"))))
         await(db.collection("fleet").document("special-1").set(mapOf("name" to "Special-1")))
         await(db.collection("announcements").document("a1").set(mapOf(
             "title" to "Night trips run 15 minutes later this week",
@@ -172,8 +174,13 @@ class ShowcaseTest {
 
     // ---------- Helpers ----------
 
+    // The test drives Compose's clock, so let frames run while waiting (the map draws on its own).
     private fun shot(name: String, settle: Long = 2_500) {
-        Thread.sleep(settle)
+        val end = System.currentTimeMillis() + settle
+        while (System.currentTimeMillis() < end) {
+            compose.mainClock.advanceTimeBy(100)
+            Thread.sleep(100)
+        }
         val bitmap = instrumentation.uiAutomation.takeScreenshot() ?: return
         File(shots, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
@@ -221,18 +228,7 @@ class ShowcaseTest {
         // A student.
         signedInAs("student") {
             waitFor("Normal-1")
-            shot("02-live-map", settle = 9_000)
-            tap("Normal-1")
-            shot("03-bus-selected", settle = 6_000)
-            runCatching {
-                tap("Where to?")
-                tap("Sonadanga Bus Terminal")
-                shot("04-best-place-to-get-off", settle = 4_000)
-                tap("Compare")
-                shot("05-compare-buses", settle = 4_000)
-                instrumentation.uiAutomation.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK)
-            }
-            Thread.sleep(1_000)
+            shot("02-live-map", settle = 10_000)
             tap("Schedule")
             shot("06-schedule")
             tap("Routes")
@@ -241,6 +237,17 @@ class ShowcaseTest {
             shot("08-news")
             tap("Profile")
             shot("09-profile")
+            tap("Map")
+            tap("Normal-1")
+            waitFor("Where to?")
+            shot("03-bus-selected", settle = 6_000)
+            tap("Where to?")
+            tap("Sonadanga Bus Terminal")
+            waitFor("Get off at")
+            shot("04-best-place-to-get-off", settle = 4_000)
+            tap("Compare")
+            waitFor("fastest first")
+            shot("05-compare-buses", settle = 4_000)
         }
 
         // The driver.

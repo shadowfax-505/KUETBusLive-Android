@@ -14,4 +14,6 @@ for f in $(adb shell run-as $APP ls files/shots | tr -d '\r'); do
   adb exec-out run-as $APP cat "files/shots/$f" > "screenshots/$f"
 done
 adb logcat -d -s Showcase:E AndroidRuntime:E > screenshots/log.txt || true
+adb logcat -d | grep -iE 'osrm|maplibre|mbgl|kuetbus' | tail -300 >> screenshots/log.txt || true
+echo "OSRM from runner: $(curl -s -o /dev/null -w '%{http_code}' 'https://router.project-osrm.org/route/v1/driving/89.5024,22.8999;89.5170,22.8660')" >> screenshots/log.txt
 ls -la screenshots
