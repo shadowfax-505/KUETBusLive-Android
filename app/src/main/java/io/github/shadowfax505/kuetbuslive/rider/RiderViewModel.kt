@@ -17,17 +17,21 @@ import io.github.shadowfax505.kuetbuslive.data.Osrm
 import io.github.shadowfax505.kuetbuslive.data.Prefs
 import io.github.shadowfax505.kuetbuslive.data.Repository
 import io.github.shadowfax505.kuetbuslive.data.RouteInfo
+import io.github.shadowfax505.kuetbuslive.data.SpecialDays
+import io.github.shadowfax505.kuetbuslive.data.StatsStore
 import io.github.shadowfax505.kuetbuslive.model.AppUser
 import io.github.shadowfax505.kuetbuslive.model.Bus
 import io.github.shadowfax505.kuetbuslive.model.BusRoute
 import io.github.shadowfax505.kuetbuslive.model.BusSchedule
-import io.github.shadowfax505.kuetbuslive.model.CrowdLevel
+import io.github.shadowfax505.kuetbuslive.model.CatchPlan
+import io.github.shadowfax505.kuetbuslive.model.DropPlan
 import io.github.shadowfax505.kuetbuslive.model.Geo
 import io.github.shadowfax505.kuetbuslive.model.LatLng
-import io.github.shadowfax505.kuetbuslive.model.OnBoardDetector
 import io.github.shadowfax505.kuetbuslive.model.Stop
+import io.github.shadowfax505.kuetbuslive.model.TripOption
 import io.github.shadowfax505.kuetbuslive.model.UserRole
 import io.github.shadowfax505.kuetbuslive.model.Wave
+import io.github.shadowfax505.kuetbuslive.model.WalkingSpeed
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,8 +50,18 @@ data class RiderState(
     val selectedBusId: String? = null,
     val followBusId: String? = null,
     val wavingAtBusId: String? = null,
-    // The selected bus, once the rider has been on it for a minute: only then can they report it crowded.
+    // The bus the rider has been riding for a minute: only then can they report it crowded.
     val onBoardBusId: String? = null,
+    // Where to wait for the selected bus, and where to get off for the destination.
+    val catchPlan: CatchPlan? = null,
+    val dropPlan: DropPlan? = null,
+    // Today's pace of the selected bus against the usual (above 1 is slower).
+    val liveFactor: Double = 1.0,
+    val destination: Destination? = null,
+    // Today's buses compared for the destination, best first; null while not asked for.
+    val options: List<TripOption>? = null,
+    // The bus asked to stop where the rider gets off.
+    val requestedBusId: String? = null,
     val message: String? = null,
     val nowMillis: Long = System.currentTimeMillis(),
 ) {
@@ -55,7 +69,7 @@ data class RiderState(
 }
 
 // Rider side of the live map: running buses this rider may board, ETAs to their
-// stop, crowd reports and "I'm waiting here". Students only see student buses;
+// stop, crowd reports, "I'm waiting here", and the best places to wait and to get off. Students only see student buses;
 // teachers see every bus. The same behaviour as the iOS BusViewModel.
 class RiderViewModel(application: Application) : AndroidViewModel(application) {
     private val prefs = Prefs(application)
@@ -69,15 +83,25 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
     private var started = false
     private val lastEtaFetch = mutableMapOf<String, Long>()
     private val alerted = mutableSetOf<String>()
-    private val onBoard = OnBoardDetector()
+    private val planner = TripPlanner()
+    private var walking: WalkingSpeed = prefs.walkingSpeed
+    private var unsavedWalking = 0
     private val locationClient = LocationServices.getFusedLocationProviderClient(application)
     private var riderPosition: LatLng? = null
+    private var mapVisible = false
     private var tracking = false
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             val fix = result.lastLocation ?: return
-            riderPosition = LatLng(fix.latitude, fix.longitude)
-            checkOnBoard()
+            val position = LatLng(fix.latitude, fix.longitude)
+            riderPosition = position
+            val speed = if (fix.hasSpeed()) fix.speed.toDouble() else null
+            // How fast this rider walks, learned from good fixes and kept on this phone only.
+            if (speed != null && fix.hasAccuracy() && fix.accuracy < 20f) {
+                walking = walking.add(speed)
+                if (++unsavedWalking >= 10) { prefs.walkingSpeed = walking; unsavedWalking = 0 }
+            }
+            riderMoved(position, speed)
         }
     }
 
@@ -88,6 +112,7 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         started = true
+        SpecialDays.start()
         viewModelScope.launch {
             Repository.buses().collect { all ->
                 val role = this@RiderViewModel.user?.role ?: UserRole.STUDENT
@@ -103,9 +128,18 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 visible.forEach { loadRoutePath(it.routeId) }
                 refreshAllEtas(force = false)
-                updateTracking()
+                // The bus I was on, or asked to stop, finished its trip.
+                _state.update { s ->
+                    s.copy(
+                        onBoardBusId = s.onBoardBusId?.takeIf { id -> visible.any { it.id == id } },
+                        requestedBusId = s.requestedBusId?.takeIf { id -> all.any { it.id == id } },
+                    )
+                }
+                updatePlan()
             }
         }
+        // Fresh learned numbers move the suggestions.
+        viewModelScope.launch { StatsStore.routes.collect { updatePlan() } }
         viewModelScope.launch {
             Repository.routes().collect { routes ->
                 _state.update { it.copy(routes = routes) }
@@ -137,9 +171,19 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
     // ---------- Selection ----------
 
     fun select(busId: String?) {
-        _state.update { it.copy(selectedBusId = busId, followBusId = if (busId == null) null else it.followBusId) }
-        updateTracking()
-        busId?.let { id -> _state.value.buses.firstOrNull { it.id == id }?.let { refreshEta(it, force = true) } }
+        _state.update {
+            it.copy(
+                selectedBusId = busId, followBusId = if (busId == null) null else it.followBusId,
+                catchPlan = null, dropPlan = null, liveFactor = 1.0,
+            )
+        }
+        busId?.let { id ->
+            _state.value.buses.firstOrNull { it.id == id }?.let { bus ->
+                refreshEta(bus, force = true)
+                viewModelScope.launch { StatsStore.load(bus.routeId, bus.driverId) }
+            }
+        }
+        updatePlan()
     }
 
     fun toggleFollow() {
@@ -188,7 +232,10 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
                 if (info == null) it.copy(etaFailed = it.etaFailed + bus.id)
                 else it.copy(eta = it.eta + (bus.id to info), etaFailed = it.etaFailed - bus.id)
             }
-            if (info != null) checkArrival(bus, info, stop)
+            if (info != null) {
+                checkArrival(bus, info, stop)
+                if (bus.id == _state.value.selectedBusId) updatePlan()
+            }
         }
     }
 
@@ -229,12 +276,17 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // ---------- On board ----------
+    // ---------- Rider position, riding, and the plans ----------
 
-    // The rider's position is followed only while a bus is selected, every 5 seconds.
+    // The rider's position is followed while the map is on screen, every 5 seconds.
+    fun setMapVisible(visible: Boolean) {
+        mapVisible = visible
+        updateTracking()
+    }
+
     @SuppressLint("MissingPermission")
     private fun updateTracking() {
-        val want = _state.value.selectedBusId != null && hasLocationPermission()
+        val want = mapVisible && hasLocationPermission()
         if (want && !tracking) {
             tracking = true
             val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5_000L).setMinUpdateIntervalMillis(3_000L).build()
@@ -243,36 +295,116 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
         } else if (!want && tracking) {
             tracking = false
             locationClient.removeLocationUpdates(locationCallback)
-            riderPosition = null
-            onBoard.reset()
-            _state.update { it.copy(onBoardBusId = null) }
+            prefs.walkingSpeed = walking
         }
     }
 
     private fun hasLocationPermission(): Boolean =
         ContextCompat.checkSelfPermission(getApplication(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
-    private fun checkOnBoard() {
-        val bus = _state.value.selectedBus
-        val on = onBoard.update(riderPosition, bus, System.currentTimeMillis())
-        val id = if (on) bus?.id else null
-        if (id != _state.value.onBoardBusId) _state.update { it.copy(onBoardBusId = id) }
+    private fun riderMoved(position: LatLng, speed: Double?) {
+        val s = _state.value
+        // Riding a bus and then leaving it adds one anonymous drop-off to the shared numbers.
+        planner.trackRides(s.buses, position, speed, s.routePaths, System.currentTimeMillis())?.let { (routeId, point) ->
+            viewModelScope.launch { runCatching { StatsStore.addDropoff(routeId, point) } }
+        }
+        val riding = planner.ridingBusId?.takeIf { id -> s.buses.any { it.id == id } }
+        if (riding != s.onBoardBusId) _state.update { it.copy(onBoardBusId = riding) }
+        updatePlan()
+    }
+
+    private fun routerSpeed(busId: String): Double? =
+        _state.value.eta[busId]?.let { it.distanceMetres / maxOf(it.durationSeconds, 1.0) }
+
+    private fun dataFor(routeId: String, driver: String?) =
+        RouteData(StatsStore.profile(routeId), StatsStore.spots(routeId), StatsStore.waveRate(driver))
+
+    private fun updatePlan() {
+        val s = _state.value
+        val bus = s.selectedBus ?: return
+        val route = routeFor(bus) ?: return
+        val now = System.currentTimeMillis()
+        val plans = planner.update(
+            bus, route, s.routePaths[route.id], dataFor(route.id, bus.driverId), riderPosition, s.destination,
+            onBoard = s.onBoardBusId == bus.id, boardingStop = boardingStop?.position, walking = walking,
+            routerSpeed = routerSpeed(bus.id), special = SpecialDays.kindOn(now), now = now,
+        )
+        _state.update { it.copy(catchPlan = plans.catchPlan, dropPlan = plans.dropPlan, liveFactor = plans.liveFactor) }
+    }
+
+    // Every stop on the routes this rider can see, once each, for "Where to?".
+    fun destinations(): List<Destination> {
+        val s = _state.value
+        val routeIds = s.buses.map { it.routeId }.toSet()
+        val routes = s.routes.sortedByDescending { it.id in routeIds }
+        return routes.flatMap { it.stops }.distinctBy { it.name.lowercase() }.map { Destination(it.name, it.position) }
+    }
+
+    fun setDestination(destination: Destination?) {
+        _state.update { it.copy(destination = destination, options = null) }
+        updatePlan()
+    }
+
+    // Ranks the running buses and today's later trips for the destination.
+    fun compare() {
+        val destination = _state.value.destination ?: return
+        val role = user?.role ?: UserRole.STUDENT
+        viewModelScope.launch {
+            _state.value.routes.forEach { route -> runCatching { StatsStore.load(route.id, null) } }
+            _state.value.buses.mapNotNull { it.driverId }.distinct().forEach { StatsStore.loadWaveRate(it) }
+            val s = _state.value
+            val options = planner.compare(
+                destination, s.buses, s.routes, s.routePaths, s.schedules.filter { it.audience.canBoard(role) },
+                riderPosition, walking, ::dataFor, ::routerSpeed, { SpecialDays.kindOn(it) },
+            )
+            _state.update { it.copy(options = options) }
+        }
+    }
+
+    fun closeOptions() = _state.update { it.copy(options = null) }
+
+    // Asks the driver to stop where the rider gets off. One request at a time.
+    fun requestStop(bus: Bus) {
+        val me = user ?: return
+        val plan = _state.value.dropPlan ?: return
+        val destination = _state.value.destination ?: return
+        viewModelScope.launch {
+            runCatching {
+                _state.value.requestedBusId?.takeIf { it != bus.id }?.let { Repository.cancelDropoff(it, me.id) }
+                Repository.sendDropoff(bus.id, me.id, destination.name, plan.point.position.lat, plan.point.position.lng)
+            }.onSuccess {
+                _state.update { it.copy(requestedBusId = bus.id, message = "The driver will see you get off near ${plan.point.name}.") }
+            }.onFailure {
+                _state.update { it.copy(message = "Could not send. Check your connection.") }
+            }
+        }
+    }
+
+    fun cancelStop() {
+        val me = user ?: return
+        val busId = _state.value.requestedBusId ?: return
+        viewModelScope.launch {
+            runCatching { Repository.cancelDropoff(busId, me.id) }
+            _state.update { it.copy(requestedBusId = null) }
+        }
     }
 
     override fun onCleared() {
         if (tracking) locationClient.removeLocationUpdates(locationCallback)
+        prefs.walkingSpeed = walking
         super.onCleared()
     }
 
     // Tells the driver where this rider waits, for 15 minutes. One wave at a time.
-    fun wave(bus: Bus) {
+    // With a catch plan, the rider waves from its point instead of their stop.
+    fun wave(bus: Bus, at: CatchPlan? = null) {
         val me = user ?: return
-        val stop = boardingStop ?: run {
+        val stop = at?.let { Stop(it.point.name, null, it.point.position.lat, it.point.position.lng) } ?: boardingStop ?: run {
             _state.update { it.copy(message = "Choose your stop first, so the driver knows where you are.") }
             return
         }
         val path = _state.value.routePaths[bus.routeId] ?: emptyList()
-        val point = Geo.snap(stop.position, path)?.point ?: stop.position
+        val point = if (at != null) stop.position else Geo.snap(stop.position, path)?.point ?: stop.position
         viewModelScope.launch {
             runCatching {
                 _state.value.wavingAtBusId?.takeIf { it != bus.id }?.let { Repository.cancelWave(it, me.id) }

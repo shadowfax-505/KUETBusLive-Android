@@ -57,13 +57,7 @@ object StatsStore {
     // ---------- Reading ----------
 
     suspend fun load(routeId: String, driver: String?, force: Boolean = false) {
-        if (driver != null && _waveRates.value[driver] == null) {
-            runCatching {
-                val doc = db.collection("driverStats").document(driver).get().await()
-                val rate = (doc.get("stops").asInt() + 1).toDouble() / (doc.get("asks").asInt() + 2)
-                _waveRates.update { it + (driver to rate) }
-            }
-        }
+        if (driver != null) loadWaveRate(driver)
         val known = _routes.value[routeId]
         val now = System.currentTimeMillis()
         if (!force && known != null && now - known.loadedAtMillis < REFRESH_MILLIS) return
@@ -83,6 +77,16 @@ object StatsStore {
                 SpotStat(LatLng(lat, lng), d.get("asks").asInt(), d.get("stops").asInt(), d.get("dropoffs").asInt())
             }
             _routes.update { it + (routeId to (it[routeId] ?: RouteStats()).copy(spots = spots)) }
+        }
+    }
+
+    // How often this driver stops for a wave, with one stop and one miss assumed to start with.
+    suspend fun loadWaveRate(driver: String) {
+        if (_waveRates.value[driver] != null) return
+        runCatching {
+            val doc = db.collection("driverStats").document(driver).get().await()
+            val rate = (doc.get("stops").asInt() + 1).toDouble() / (doc.get("asks").asInt() + 2)
+            _waveRates.update { it + (driver to rate) }
         }
     }
 

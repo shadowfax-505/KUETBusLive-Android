@@ -2,9 +2,11 @@ package io.github.shadowfax505.kuetbuslive.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import io.github.shadowfax505.kuetbuslive.model.RunningStat
+import io.github.shadowfax505.kuetbuslive.model.WalkingSpeed
 
 // Settings kept only on this phone, like on iOS: arrival alerts, read news,
-// and the bus this rider is waving at.
+// the bus this rider is waving at, and how fast they walk.
 class Prefs(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("kuet_bus_live", Context.MODE_PRIVATE)
 
@@ -27,6 +29,21 @@ class Prefs(context: Context) {
     var wavingUntil: Long
         get() = prefs.getLong("wavingUntil", 0)
         set(value) = prefs.edit().putLong("wavingUntil", value).apply()
+
+    // How fast this rider walks, learned on this phone and never uploaded.
+    var walkingSpeed: WalkingSpeed
+        get() = WalkingSpeed(
+            RunningStat(
+                prefs.getInt("walkingN", 0),
+                prefs.getFloat("walkingMean", 0f).toDouble(),
+                prefs.getFloat("walkingVariance", 0f).toDouble(),
+            )
+        )
+        set(value) = prefs.edit()
+            .putInt("walkingN", value.stat.n)
+            .putFloat("walkingMean", value.stat.mean.toFloat())
+            .putFloat("walkingVariance", value.stat.variance.toFloat())
+            .apply()
 
     fun clear() = prefs.edit().clear().apply()
 }
