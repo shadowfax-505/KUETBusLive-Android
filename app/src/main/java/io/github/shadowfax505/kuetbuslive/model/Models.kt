@@ -272,6 +272,8 @@ data class Wave(
 
     companion object {
         const val LIFETIME_MILLIS = 15 * 60 * 1000L
+        // A "please stop here" request lasts 90 minutes (the rules allow up to 2 hours).
+        const val DROPOFF_LIFETIME_MILLIS = 90 * 60 * 1000L
     }
 }
 
@@ -331,3 +333,22 @@ data class Announcement(
     val postedBy: String,
     val routeName: String?,
 )
+
+// A day the transport office marked in specialDays/{yyyy-MM-dd}: the travel model learns it apart.
+data class SpecialDay(val id: String, val kind: String, val note: String) {
+    companion object {
+        val KINDS = listOf("exam", "holiday", "event")
+
+        fun title(kind: String): String = when (kind) {
+            "exam" -> "Exams"
+            "holiday" -> "Holiday"
+            else -> "Event"
+        }
+
+        // The special kind of the day this moment falls on in Dhaka, or null on an ordinary day.
+        fun kindOn(days: List<SpecialDay>, millis: Long): String? {
+            val id = Timetable.dayString(millis)
+            return days.firstOrNull { it.id == id }?.kind
+        }
+    }
+}

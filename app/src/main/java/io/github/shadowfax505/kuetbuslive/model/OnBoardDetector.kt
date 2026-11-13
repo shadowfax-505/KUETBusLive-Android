@@ -1,48 +1,52 @@
 package io.github.shadowfax505.kuetbuslive.model
 
-// Works out whether the rider is on a bus, the same way as the iOS app: the rider
-// has stayed within 30 m of the moving bus for a minute. Only then is "it's
-// overcrowded" offered, and the rules check the rider's position again.
-class OnBoardDetector(
-    private val nearMetres: Double = NEAR_METRES,
-    private val holdMillis: Long = HOLD_MILLIS,
-) {
-    private var busId: String? = null
-    private var nearSince: Long? = null
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 
-    // Feed every new rider fix. Returns true once the rider counts as on board.
-    fun update(rider: LatLng?, bus: Bus?, nowMillis: Long): Boolean {
-        if (rider == null || bus == null) {
-            reset()
-            return false
-        }
-        if (bus.id != busId) {
-            busId = bus.id
-            nearSince = null
-        }
-        val near = Geo.distanceMetres(rider, bus.position) <= nearMetres
-        if (!near) {
-            nearSince = null
-            return false
-        }
-        // Standing next to a parked bus doesn't count: the bus must be moving at some point.
-        val moving = (bus.speed ?: 0.0) > MOVING_SPEED
-        val since = nearSince
-        if (since == null) {
-            if (moving) nearSince = nowMillis
-            return false
-        }
-        return nowMillis - since >= holdMillis
-    }
+// Is the rider on this bus? The same rule as the iOS app: for at least a minute the
+// phone stayed within 30 m of the bus while both moved at about the same speed. The
+// bus's position is a few seconds old, so it is first moved ahead along its heading.
+// Short stops (signals, stops) don't reset the minute; moving away from the bus does.
+class OnBoardDetector {
+    var sinceMillis: Long? = null
+        private set
+    var isOnBoard = false
+        private set
 
-    fun reset() {
-        busId = null
-        nearSince = null
+    fun update(rider: LatLng, riderSpeed: Double?, bus: Bus, nowMillis: Long): Boolean {
+        val busNow = projected(bus.position, bus.heading, bus.speed, bus.updatedAtMillis, nowMillis)
+        if (Geo.distanceMetres(rider, busNow) > RADIUS) {
+            sinceMillis = null
+            isOnBoard = false
+            return false
+        }
+        val busSpeed = bus.speed ?: 0.0
+        val mySpeed = riderSpeed ?: 0.0
+        if (busSpeed >= MOVING_SPEED && mySpeed >= MOVING_SPEED && abs(busSpeed - mySpeed) <= SPEED_TOLERANCE) {
+            if (sinceMillis == null) sinceMillis = nowMillis
+        }
+        val since = sinceMillis
+        if (since != null && nowMillis - since >= DURATION_MILLIS) isOnBoard = true
+        return isOnBoard
     }
 
     companion object {
-        const val NEAR_METRES = 30.0
-        const val HOLD_MILLIS = 60_000L
-        const val MOVING_SPEED = 1.5   // metres per second
+        const val RADIUS = 30.0
+        const val DURATION_MILLIS = 60_000L
+        const val MOVING_SPEED = 2.0
+        const val SPEED_TOLERANCE = 2.5
+        const val MAX_PROJECTION_MILLIS = 10_000L
+
+        // Where the bus probably is now: its last position moved ahead by speed x age.
+        fun projected(bus: LatLng, heading: Double?, speed: Double?, updatedAtMillis: Long, nowMillis: Long): LatLng {
+            if (heading == null || speed == null || speed <= 0) return bus
+            val age = (nowMillis - updatedAtMillis).coerceIn(0, MAX_PROJECTION_MILLIS) / 1000.0
+            val metres = speed * age
+            val radians = Math.toRadians(heading)
+            val north = metres * cos(radians)
+            val east = metres * sin(radians)
+            return LatLng(bus.lat + north / 111_320, bus.lng + east / (111_320 * cos(Math.toRadians(bus.lat))))
+        }
     }
 }
