@@ -35,6 +35,8 @@ jobs:
           if [ -n "$GOOGLE_SERVICES_JSON" ]; then
             printf '%s' "$GOOGLE_SERVICES_JSON" > app/google-services.json
             echo "HAS_FIREBASE=true" >> "$GITHUB_ENV"
+            # A short fingerprint of what was pasted, to spot a wrong or truncated config.
+            python3 -c 'import json,hashlib;d=json.load(open("app/google-services.json"));c=d["client"][0];k=c["api_key"][0]["current_key"];print("project:",d["project_info"]["project_id"],"package:",c["client_info"]["android_client_info"]["package_name"],"key length:",len(k),"key sha256:",hashlib.sha256(k.encode()).hexdigest()[:12])'
           fi
 
       - name: Unit tests
