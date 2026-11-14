@@ -24,8 +24,19 @@ android {
         testInstrumentationRunner = "io.github.shadowfax505.kuetbuslive.ShowcaseRunner"
     }
 
+    // A fixed debug key, so a newer demo build installs over an older one on the same phone.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         debug {
+            signingConfig = signingConfigs.getByName("debug")
             // Debug builds accept the @test.com demo accounts, like the iOS debug build.
             buildConfigField("Boolean", "DEMO_ACCOUNTS", "true")
         }
