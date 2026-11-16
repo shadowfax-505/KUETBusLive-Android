@@ -10,14 +10,6 @@ import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Campaign
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.Route
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,6 +29,8 @@ import io.github.shadowfax505.kuetbuslive.campus.RoutesScreen
 import io.github.shadowfax505.kuetbuslive.campus.StopPickerSheet
 import io.github.shadowfax505.kuetbuslive.model.AppUser
 import io.github.shadowfax505.kuetbuslive.schedule.ScheduleScreen
+import io.github.shadowfax505.kuetbuslive.ui.components.TabBar
+import io.github.shadowfax505.kuetbuslive.ui.components.TabItem
 
 private enum class RiderTab(val label: String, val icon: ImageVector) {
     MAP("Map", Icons.Rounded.Map),
@@ -85,26 +79,11 @@ fun RiderHome(session: SessionViewModel, user: AppUser) {
                 )
             }
         }
-        NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-            RiderTab.entries.forEach { item ->
-                NavigationBarItem(
-                    selected = tab == item,
-                    onClick = { tab = item },
-                    icon = {
-                        if (item == RiderTab.NEWS && unread > 0) {
-                            BadgedBox(badge = { Badge { Text("$unread") } }) { Icon(item.icon, null) }
-                        } else {
-                            Icon(item.icon, null)
-                        }
-                    },
-                    label = { Text(item.label) },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                        selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    ),
-                )
-            }
-        }
+        TabBar(
+            items = RiderTab.entries.map { TabItem(it.label, it.icon, if (it == RiderTab.NEWS) unread else 0) },
+            selected = tab.ordinal,
+            onSelect = { tab = RiderTab.entries[it] },
+        )
     }
 
     if (pickingStop) {

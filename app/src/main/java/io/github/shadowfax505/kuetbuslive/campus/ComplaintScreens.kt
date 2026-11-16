@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -21,8 +22,8 @@ import androidx.compose.material.icons.rounded.MarkEmailUnread
 import androidx.compose.material.icons.rounded.Feedback
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -40,6 +41,7 @@ import io.github.shadowfax505.kuetbuslive.model.AppUser
 import io.github.shadowfax505.kuetbuslive.model.Complaint
 import io.github.shadowfax505.kuetbuslive.model.ComplaintCategory
 import io.github.shadowfax505.kuetbuslive.model.ComplaintStatus
+import io.github.shadowfax505.kuetbuslive.ui.components.AppChip
 import io.github.shadowfax505.kuetbuslive.ui.components.AppTextField
 import io.github.shadowfax505.kuetbuslive.ui.components.EmptyState
 import io.github.shadowfax505.kuetbuslive.ui.components.Page
@@ -61,8 +63,10 @@ fun MyComplaintsScreen(user: AppUser, campus: CampusViewModel, onBack: () -> Uni
     Page(
         "Complaints", "Tell the transport office what went wrong", onBack = onBack,
         message = message, onMessageShown = campus::clearMessage,
-        floating = {
-            ExtendedFloatingActionButton(onClick = { composing = true }, icon = { Icon(Icons.Rounded.Add, null) }, text = { Text("New complaint") })
+        actions = {
+            IconButton(onClick = { composing = true }) {
+                Icon(Icons.Rounded.Add, "New complaint", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+            }
         },
     ) {
         if (complaints.isEmpty()) {
@@ -85,13 +89,13 @@ fun ComplaintCard(complaint: Complaint, showSender: Boolean, onClick: (() -> Uni
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
+            .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surface)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(18.dp),
+            .padding(16.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(complaint.category.title, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+            Text(complaint.category.title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
             if (showSender && !complaint.readByAdmin) {
                 Icon(Icons.Rounded.MarkEmailUnread, "Unread", tint = Brand.Danger)
                 Spacer(Modifier.width(8.dp))
@@ -108,15 +112,15 @@ fun ComplaintCard(complaint: Complaint, showSender: Boolean, onClick: (() -> Uni
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(8.dp))
-        Text(complaint.text, style = MaterialTheme.typography.bodyMedium)
+        Text(complaint.text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
         complaint.adminReply?.let { reply ->
             Spacer(Modifier.height(10.dp))
             Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)).padding(12.dp),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.background).padding(12.dp),
             ) {
-                Text("Transport office", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                Text(reply, style = MaterialTheme.typography.bodyMedium)
+                Text("Transport office", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(reply, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
             }
         }
     }
@@ -134,7 +138,7 @@ private fun NewComplaintDialog(onDismiss: () -> Unit, onSend: (ComplaintCategory
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ComplaintCategory.entries.forEach { FilterChip(category == it, { category = it }, { Text(it.title) }) }
+                    ComplaintCategory.entries.forEach { AppChip(category == it, { category = it }, { Text(it.title) }) }
                 }
                 AppTextField(bus, { bus = it }, "Bus (optional), e.g. Normal-2")
                 AppTextField(route, { route = it }, "Route (optional)")

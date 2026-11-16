@@ -37,7 +37,6 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -76,6 +75,7 @@ import io.github.shadowfax505.kuetbuslive.model.Bus
 import io.github.shadowfax505.kuetbuslive.model.BusAssignment
 import io.github.shadowfax505.kuetbuslive.model.CrowdLevel
 import io.github.shadowfax505.kuetbuslive.model.Timetable
+import io.github.shadowfax505.kuetbuslive.ui.components.AppChip
 import io.github.shadowfax505.kuetbuslive.ui.components.AppTextField
 import io.github.shadowfax505.kuetbuslive.ui.components.AudienceBadge
 import io.github.shadowfax505.kuetbuslive.ui.components.Pill
@@ -234,14 +234,13 @@ private fun DriverTripScreen(user: AppUser, onProfile: () -> Unit) {
                         }
                         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             choices.forEach { s ->
-                                FilterChip(
+                                AppChip(
                                     selected = s.id == schedule?.id,
                                     onClick = { selectedScheduleId = s.id },
                                     label = {
                                         val onOtherBus = dayBus != null && s.tripName != dayBus.name
                                         Text("${Timetable.display(s.campusTime)} · ${s.spot}" + if (onOtherBus || dayBus == null) " · ${s.tripName}" else "")
-                                    },
-                                    shape = RoundedCornerShape(14.dp),
+                                    }
                                 )
                             }
                         }
@@ -255,7 +254,7 @@ private fun DriverTripScreen(user: AppUser, onProfile: () -> Unit) {
                         SectionTitle("Route", Modifier.padding(top = 10.dp))
                         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             routes.forEach { r ->
-                                FilterChip(selected = r.id == route?.id, onClick = { selectedRouteId = r.id }, label = { Text(r.name) }, shape = RoundedCornerShape(14.dp))
+                                AppChip(selected = r.id == route?.id, onClick = { selectedRouteId = r.id }, label = { Text(r.name) })
                             }
                         }
                         Spacer(Modifier.height(16.dp))

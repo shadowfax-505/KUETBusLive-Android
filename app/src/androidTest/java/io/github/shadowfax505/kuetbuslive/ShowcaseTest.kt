@@ -1,6 +1,7 @@
 package io.github.shadowfax505.kuetbuslive
 
 import android.graphics.Bitmap
+import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -46,6 +47,7 @@ class ShowcaseTest {
     private val shots by lazy { File(instrumentation.targetContext.filesDir, "shots").apply { mkdirs() } }
     private val uids = mutableMapOf<String, String>()
     @Volatile private var driving = true
+    @Volatile private var step = 0
 
     // ---------- Made-up data ----------
 
@@ -139,7 +141,6 @@ class ShowcaseTest {
     // Two buses drive their routes, a position every 2 seconds, like a driver's phone.
     private fun startBuses() {
         thread(isDaemon = true) {
-            var step = 0
             while (driving) {
                 moveBus("bus-normal-1", "Normal-1", "sonadanga", "KUET to Sonadanga", sonadanga, "student", step, 0.20)
                 moveBus("bus-special-1", "Special-1", "royal", "KUET to Royal More", royalMore, "teacher", step, 0.55)
@@ -212,14 +213,37 @@ class ShowcaseTest {
 
     @Test
     fun tour() {
-        // Signing in.
-        part("sign-in") {
+        walk("")
+        // The same screens again with the phone in dark mode.
+        night(true)
+        try {
+            walk("dark-")
+        } finally {
+            night(false)
+        }
+    }
+
+    private fun night(on: Boolean) {
+        val out = instrumentation.uiAutomation.executeShellCommand("cmd uimode night ${if (on) "yes" else "no"}")
+        ParcelFileDescriptor.AutoCloseInputStream(out).use { it.readBytes() }
+        Thread.sleep(1_500)
+    }
+
+    private fun walk(p: String) {
+        step = 0 // Both passes see the buses at the same places.
+        // Signing in and signing up.
+        part("${p}sign-in") {
           ActivityScenario.launch(MainActivity::class.java).use {
-            waitFor("Welcome back")
-            shot("01-sign-in")
+            waitFor("Forgot password?")
+            shot("${p}01-sign-in", settle = 4_000)
+            tap("Create an account")
+            waitFor("Create Account")
+            shot("${p}01b-sign-up")
+            tap("I already have an account")
+            waitFor("Forgot password?")
             compose.onAllNodes(hasText("Email")).onFirst().performTextInput("student@test.com")
             compose.onAllNodes(hasText("Password")).onFirst().performTextInput(PASSWORD)
-            tap("Sign in")
+            tap("Sign In")
             waitFor("Schedule")
             auth.signOut()
           }
@@ -228,42 +252,44 @@ class ShowcaseTest {
         // A student.
         signedInAs("student") {
             waitFor("Normal-1")
-            shot("02-live-map", settle = 10_000)
+            shot("${p}02-live-map", settle = 10_000)
             tap("Schedule")
-            shot("06-schedule")
+            shot("${p}06-schedule")
             tap("Routes")
-            shot("07-routes")
+            shot("${p}07-routes")
             tap("News")
-            shot("08-news")
+            shot("${p}08-news")
             tap("Profile")
-            shot("09-profile")
+            shot("${p}09-profile")
             tap("Map")
             tap("Normal-1")
             waitFor("Where to?")
-            shot("03-bus-selected", settle = 6_000)
+            shot("${p}03-bus-selected", settle = 6_000)
             tap("Where to?")
             tap("Sonadanga Bus Terminal")
             waitFor("Get off at")
-            shot("04-best-place-to-get-off", settle = 4_000)
+            shot("${p}04-best-place-to-get-off", settle = 4_000)
             tap("Compare")
             waitFor("fastest first")
-            shot("05-compare-buses", settle = 4_000)
+            shot("${p}05-compare-buses", settle = 4_000)
         }
 
         // The driver.
         signedInAs("driver") {
             waitFor("Start trip")
-            shot("10-driver-home", settle = 5_000)
+            shot("${p}10-driver-home", settle = 5_000)
         }
 
         // The transport office.
         signedInAs("admin") {
             waitFor("Approvals")
-            shot("11-admin-map", settle = 8_000)
+            shot("${p}11-admin-map", settle = 8_000)
             tap("Approvals")
-            shot("12-admin-approvals")
+            shot("${p}12-admin-approvals")
             tap("More")
-            shot("13-admin-more")
+            shot("${p}13-admin-more")
+            tap("Drivers & buses")
+            shot("${p}14-admin-fleet")
         }
     }
 

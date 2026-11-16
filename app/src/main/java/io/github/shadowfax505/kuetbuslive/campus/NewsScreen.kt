@@ -39,7 +39,8 @@ import io.github.shadowfax505.kuetbuslive.model.AppUser
 import io.github.shadowfax505.kuetbuslive.model.UserRole
 import io.github.shadowfax505.kuetbuslive.ui.components.AppTextField
 import io.github.shadowfax505.kuetbuslive.ui.components.EmptyState
-import io.github.shadowfax505.kuetbuslive.ui.components.IconBubble
+import io.github.shadowfax505.kuetbuslive.ui.components.IconTile
+import io.github.shadowfax505.kuetbuslive.ui.theme.Tile
 import io.github.shadowfax505.kuetbuslive.ui.components.Page
 import io.github.shadowfax505.kuetbuslive.ui.components.Pill
 
@@ -58,9 +59,9 @@ fun NewsScreen(user: AppUser, campus: CampusViewModel, onBack: (() -> Unit)? = n
     Page(
         "News", "From the KUET transport office", onBack = onBack,
         message = message, onMessageShown = campus::clearMessage,
-        floating = {
+        actions = {
             if (isAdmin) {
-                ExtendedFloatingActionButton(onClick = { composing = true }, icon = { Icon(Icons.Rounded.Edit, null) }, text = { Text("New post") })
+                IconButton(onClick = { composing = true }) { Icon(Icons.Rounded.Edit, "New post", tint = MaterialTheme.colorScheme.primary) }
             }
         },
     ) {
@@ -69,13 +70,13 @@ fun NewsScreen(user: AppUser, campus: CampusViewModel, onBack: (() -> Unit)? = n
         }
         items(news, key = { it.id }) { post ->
             Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(MaterialTheme.colorScheme.surface).padding(18.dp),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surface).padding(16.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconBubble(Icons.Rounded.Campaign, MaterialTheme.colorScheme.tertiary, size = 38.dp)
+                    IconTile(Icons.Rounded.Campaign, Tile.Pink, size = 34.dp)
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
-                        Text(post.title, style = MaterialTheme.typography.titleMedium)
+                        Text(post.title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                         Text(
                             "${post.postedBy} · ${relativeTime(post.createdAtMillis)}",
                             style = MaterialTheme.typography.bodySmall,
@@ -83,11 +84,11 @@ fun NewsScreen(user: AppUser, campus: CampusViewModel, onBack: (() -> Unit)? = n
                         )
                     }
                     if (isAdmin) {
-                        IconButton(onClick = { deleting = post }) { Icon(Icons.Rounded.Delete, "Delete") }
+                        IconButton(onClick = { deleting = post }) { Icon(Icons.Rounded.Delete, "Delete", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
                     }
                 }
                 Spacer(Modifier.height(10.dp))
-                Text(post.body, style = MaterialTheme.typography.bodyMedium)
+                Text(post.body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                 post.routeName?.let {
                     Spacer(Modifier.height(10.dp))
                     Pill(it, MaterialTheme.colorScheme.primary)
@@ -123,7 +124,7 @@ fun NewsScreen(user: AppUser, campus: CampusViewModel, onBack: (() -> Unit)? = n
             onDismissRequest = { deleting = null },
             title = { Text("Delete this post?") },
             text = { Text("\"${post.title}\" disappears for every rider.") },
-            confirmButton = { TextButton(onClick = { campus.deleteAnnouncement(post.id); deleting = null }) { Text("Delete") } },
+            confirmButton = { TextButton(onClick = { campus.deleteAnnouncement(post.id); deleting = null }) { Text("Delete", color = MaterialTheme.colorScheme.error) } },
             dismissButton = { TextButton(onClick = { deleting = null }) { Text("Cancel") } },
         )
     }

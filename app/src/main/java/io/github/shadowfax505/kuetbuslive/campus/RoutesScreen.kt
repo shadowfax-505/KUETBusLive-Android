@@ -30,13 +30,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.shadowfax505.kuetbuslive.model.AppUser
 import io.github.shadowfax505.kuetbuslive.model.BusRoute
 import io.github.shadowfax505.kuetbuslive.ui.components.EmptyState
-import io.github.shadowfax505.kuetbuslive.ui.components.IconBubble
+import io.github.shadowfax505.kuetbuslive.ui.components.IconTile
+import io.github.shadowfax505.kuetbuslive.ui.theme.Tile
+import io.github.shadowfax505.kuetbuslive.ui.theme.Brand
 import io.github.shadowfax505.kuetbuslive.ui.components.Page
 import io.github.shadowfax505.kuetbuslive.ui.components.Pill
 
@@ -62,7 +65,7 @@ private fun RouteCard(route: BusRoute, user: AppUser, onPickStop: ((io.github.sh
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
+            .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surface)
             .animateContentSize(),
     ) {
@@ -70,17 +73,17 @@ private fun RouteCard(route: BusRoute, user: AppUser, onPickStop: ((io.github.sh
             Modifier.fillMaxWidth().clickable { expanded = !expanded }.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconBubble(Icons.Rounded.Route, MaterialTheme.colorScheme.primary)
+            IconTile(Icons.Rounded.Route, Tile.Blue, size = 36.dp)
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Text(route.name, style = MaterialTheme.typography.titleMedium)
+                Text(route.name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                 Text(
                     listOfNotNull(route.nameBn, "${route.stops.size} stops").joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Icon(if (expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, null)
+            Icon(if (expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, null, tint = MaterialTheme.colorScheme.outline)
         }
         if (expanded) {
             Column(Modifier.padding(start = 20.dp, end = 12.dp, bottom = 12.dp)) {
@@ -89,20 +92,20 @@ private fun RouteCard(route: BusRoute, user: AppUser, onPickStop: ((io.github.sh
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         // A timeline: dots joined by a line.
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(20.dp)) {
-                            Box(Modifier.width(2.dp).height(10.dp).background(if (index == 0) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)))
+                            Box(Modifier.width(2.dp).height(10.dp).background(if (index == 0) Color.Transparent else MaterialTheme.colorScheme.outline))
                             Box(
                                 Modifier.size(if (mine) 14.dp else 10.dp).clip(CircleShape)
-                                    .background(if (mine || index == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest)
+                                    .background(if (mine || index == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)
                             )
-                            Box(Modifier.width(2.dp).height(10.dp).background(if (index == route.stops.lastIndex) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)))
+                            Box(Modifier.width(2.dp).height(10.dp).background(if (index == route.stops.lastIndex) Color.Transparent else MaterialTheme.colorScheme.outline))
                         }
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(stop.name, style = MaterialTheme.typography.bodyLarge)
+                            Text(stop.name, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
                             stop.nameBn?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                         }
                         when {
-                            mine -> Pill("My stop", MaterialTheme.colorScheme.primary)
+                            mine -> Pill("My stop", Brand.Seats)
                             onPickStop != null && index > 0 -> TextButton(onClick = { onPickStop(stop) }) { Text("Board here") }
                         }
                     }
