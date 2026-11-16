@@ -75,7 +75,7 @@ fun RiderHome(session: SessionViewModel, user: AppUser) {
                     onPickStop = { pickingStop = true },
                     onOpenComplaints = { showComplaints = true },
                     onOpenNews = null,
-                    onSignOut = { session.signOut() },
+                    onSignOut = { session.signOut() }, session = session,
                 )
             }
         }

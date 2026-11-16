@@ -74,6 +74,25 @@ object Repository {
         db.collection("users").document(uid).set(data).await()
     }
 
+    suspend fun adminCount(): Int =
+        db.collection("users").whereEqualTo("role", UserRole.ADMIN.raw).get().await().size()
+
+    // Everything an account owns that the rules let its owner delete: a running bus,
+    // saved places, a wave or stop request still open, complaints, then the profile.
+    suspend fun deleteAccountData(uid: String, wavingAtBusId: String?) {
+        wavingAtBusId?.let { deleteWave(it, uid) }
+        db.collection("buses").whereEqualTo("driverId", uid).get().await().documents.forEach { bus ->
+            bus.reference.delete().await()
+        }
+        db.collection("users").document(uid).collection("places").get().await().documents.forEach {
+            it.reference.delete().await()
+        }
+        db.collection("complaints").whereEqualTo("uid", uid).get().await().documents.forEach {
+            it.reference.delete().await()
+        }
+        db.collection("users").document(uid).delete().await()
+    }
+
     suspend fun updateName(uid: String, name: String) {
         db.collection("users").document(uid).update("name", name).await()
     }

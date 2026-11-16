@@ -2,6 +2,7 @@ package io.github.shadowfax505.kuetbuslive.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
@@ -50,7 +51,11 @@ class SessionViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
     val verifier = KuetVerifier(allowDemoAccounts = BuildConfig.DEMO_ACCOUNTS)
 
-    private val _state = MutableStateFlow(SessionState())
+    // Starts from the saved login, so a signed-in person doesn't see the sign-in screen
+    // flash at launch (and the widget and push topics aren't cleared by it).
+    private val _state = MutableStateFlow(
+        auth.currentUser.let { SessionState(uid = it?.uid, email = it?.email, emailVerified = it?.isEmailVerified ?: false) }
+    )
     val state: StateFlow<SessionState> = _state.asStateFlow()
 
     private var profileJob: Job? = null
@@ -66,6 +71,7 @@ class SessionViewModel : ViewModel() {
     }
 
     init {
+        listenToProfile(_state.value.uid)
         auth.addAuthStateListener(authListener)
     }
 
@@ -178,6 +184,46 @@ class SessionViewModel : ViewModel() {
         run {
             auth.sendPasswordResetEmail(email.trim().lowercase()).await()
             _state.update { it.copy(info = "Password reset link sent to ${email.trim()}.") }
+        }
+    }
+
+    // Removes the account for good (Google Play requires it in the app), like iOS:
+    // 1. The last admin can't leave, or nobody could approve teachers and drivers.
+    // 2. Checks the password again, because Firebase only deletes a recent sign-in.
+    // 3. Ends a driver's trip, then deletes their bus, places, complaints and profile.
+    // 4. Deletes the login, then forgets what this phone saved.
+    // `done` gets null when finished, or a message to show.
+    fun deleteAccount(password: String, wavingAtBusId: String?, beforeDeleting: () -> Unit, clearPhone: () -> Unit, done: (String?) -> Unit) {
+        val user = auth.currentUser
+        val email = user?.email
+        val profile = _state.value.profile
+        if (user == null || email == null || profile == null) {
+            done("You are not signed in.")
+            return
+        }
+        _state.update { it.copy(busy = true, error = null, info = null) }
+        viewModelScope.launch {
+            val problem = try {
+                AccountDeletion.blockReason(profile.role, Repository.adminCount().takeIf { profile.role == UserRole.ADMIN })
+                    ?: run {
+                        user.reauthenticate(EmailAuthProvider.getCredential(email, password)).await()
+                        beforeDeleting()
+                        profileJob?.cancel()
+                        Repository.deleteAccountData(user.uid, wavingAtBusId)
+                        user.delete().await()
+                        clearPhone()
+                        null
+                    }
+            } catch (e: Exception) {
+                listenToProfile(user.uid)
+                when (e) {
+                    is FirebaseAuthInvalidCredentialsException -> "That password is not right. Nothing was deleted."
+                    is FirebaseNetworkException -> "No internet connection. Try again when you're online."
+                    else -> "Could not delete the account: ${e.localizedMessage ?: "unknown error"}"
+                }
+            }
+            _state.update { it.copy(busy = false) }
+            done(problem)
         }
     }
 
