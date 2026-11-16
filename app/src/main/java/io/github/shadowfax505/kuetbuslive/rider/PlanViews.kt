@@ -30,7 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -51,6 +50,7 @@ import io.github.shadowfax505.kuetbuslive.model.DropPlan
 import io.github.shadowfax505.kuetbuslive.model.LatLng
 import io.github.shadowfax505.kuetbuslive.model.RoutePoint
 import io.github.shadowfax505.kuetbuslive.model.TripOption
+import io.github.shadowfax505.kuetbuslive.ui.components.TintedButton
 import io.github.shadowfax505.kuetbuslive.ui.components.AppTextField
 import io.github.shadowfax505.kuetbuslive.ui.components.EmptyState
 import kotlinx.coroutines.Dispatchers
@@ -107,7 +107,7 @@ fun PlanCard(
                     Icons.Rounded.DirectionsWalk, PlanText.catchTitle(catchPlan), PlanText.catchDetail(catchPlan),
                     PlanText.confidence(catchPlan.samples), Modifier.weight(1f),
                 )
-                OutlinedButton(
+                TintedButton(
                     onClick = { onWave(catchPlan) },
                     enabled = !waving,
                     shape = CircleShape,
@@ -127,11 +127,11 @@ fun PlanCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (canBoard) {
-                    OutlinedButton(onClick = if (stopRequested) onCancelStop else onRequestStop, shape = CircleShape) {
+                    TintedButton(onClick = if (stopRequested) onCancelStop else onRequestStop, shape = CircleShape) {
                         Text(if (stopRequested) "Cancel stop" else "Ask to stop here")
                     }
                 }
-                OutlinedButton(onClick = onCompare, shape = CircleShape) { Text("Compare") }
+                TintedButton(onClick = onCompare, shape = CircleShape) { Text("Compare") }
                 Spacer(Modifier.weight(1f))
                 IconButton(onClick = onClearDestination) { Icon(Icons.Rounded.Close, "Clear destination") }
             }

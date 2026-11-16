@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.EventBusy
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -35,6 +34,7 @@ import io.github.shadowfax505.kuetbuslive.data.Repository
 import io.github.shadowfax505.kuetbuslive.data.SpecialDays
 import io.github.shadowfax505.kuetbuslive.model.SpecialDay
 import io.github.shadowfax505.kuetbuslive.model.Timetable
+import io.github.shadowfax505.kuetbuslive.ui.components.AppChip
 import io.github.shadowfax505.kuetbuslive.ui.components.AppTextField
 import io.github.shadowfax505.kuetbuslive.ui.components.EmptyState
 import io.github.shadowfax505.kuetbuslive.ui.components.PrimaryButton
@@ -70,7 +70,7 @@ fun SpecialDaysScreen(onBack: () -> Unit) {
         }
         items(upcoming, key = { it.id }) { day ->
             Row(
-                Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(18.dp))
+                Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surface).padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -100,7 +100,7 @@ fun SpecialDaysScreen(onBack: () -> Unit) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     AppTextField(date, { date = it.trim() }, "Date (yyyy-MM-dd)")
                     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        SpecialDay.KINDS.forEach { k -> FilterChip(kind == k, { kind = k }, { Text(SpecialDay.title(k)) }) }
+                        SpecialDay.KINDS.forEach { k -> AppChip(kind == k, { kind = k }, { Text(SpecialDay.title(k)) }) }
                     }
                     AppTextField(note, { note = it.take(100) }, "Note (optional)")
                 }

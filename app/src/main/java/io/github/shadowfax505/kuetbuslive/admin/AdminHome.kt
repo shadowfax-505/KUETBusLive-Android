@@ -14,14 +14,6 @@ import androidx.compose.material.icons.rounded.Feedback
 import androidx.compose.material.icons.rounded.HowToReg
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.MoreHoriz
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,12 +29,17 @@ import io.github.shadowfax505.kuetbuslive.campus.CampusViewModel
 import io.github.shadowfax505.kuetbuslive.campus.MyComplaintsScreen
 import io.github.shadowfax505.kuetbuslive.campus.NewsScreen
 import io.github.shadowfax505.kuetbuslive.campus.ProfileScreen
-import io.github.shadowfax505.kuetbuslive.campus.SettingRow
 import io.github.shadowfax505.kuetbuslive.model.AppUser
 import io.github.shadowfax505.kuetbuslive.rider.LiveMapScreen
 import io.github.shadowfax505.kuetbuslive.rider.RiderViewModel
 import io.github.shadowfax505.kuetbuslive.schedule.ScheduleScreen
+import androidx.compose.ui.unit.dp
 import io.github.shadowfax505.kuetbuslive.ui.components.Page
+import io.github.shadowfax505.kuetbuslive.ui.components.Section
+import io.github.shadowfax505.kuetbuslive.ui.components.SettingRow
+import io.github.shadowfax505.kuetbuslive.ui.components.TabBar
+import io.github.shadowfax505.kuetbuslive.ui.components.TabItem
+import io.github.shadowfax505.kuetbuslive.ui.theme.Tile
 
 private enum class AdminTab(val label: String, val icon: ImageVector) {
     MAP("Map", Icons.Rounded.Map),
@@ -86,34 +83,33 @@ fun AdminHome(session: SessionViewModel, user: AppUser) {
                 AdminTab.SCHEDULE -> ScheduleScreen(user, campus)
                 AdminTab.APPROVALS -> ApprovalsScreen(admin)
                 AdminTab.MORE -> Page("More") {
-                    item { SettingRow(Icons.Rounded.DirectionsBus, "Drivers & buses", "Regular drivers, covers and absences") { page = "fleet" } }
-                    item { SettingRow(Icons.Rounded.EventNote, "Special days", "Exams, holidays and events") { page = "special" } }
-                    item { SettingRow(Icons.Rounded.Feedback, "Complaints", if (unread > 0) "$unread unread" else "All read") { page = "complaints" } }
-                    item { SettingRow(Icons.Rounded.Campaign, "News", "Post to every rider") { page = "news" } }
-                    item { SettingRow(Icons.Rounded.AccountCircle, "Profile", user.email) { page = "profile" } }
+                    item {
+                        Section(header = "Transport office", separatorInset = 60.dp) {
+                            SettingRow(Icons.Rounded.DirectionsBus, "Drivers & buses", "Regular drivers, covers and absences", Tile.Blue) { page = "fleet" }
+                            SettingRow(Icons.Rounded.EventNote, "Special days", "Exams, holidays and events", Tile.Orange) { page = "special" }
+                            SettingRow(Icons.Rounded.Feedback, "Complaints", null, Tile.Red, value = if (unread > 0) "$unread unread" else "All read") { page = "complaints" }
+                            SettingRow(Icons.Rounded.Campaign, "News", "Post to every rider", Tile.Pink) { page = "news" }
+                        }
+                    }
+                    item {
+                        Section(header = "Account", separatorInset = 60.dp) {
+                            SettingRow(Icons.Rounded.AccountCircle, "Profile", user.email, Tile.Grey) { page = "profile" }
+                        }
+                    }
                 }
             }
         }
-        NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-            AdminTab.entries.forEach { item ->
-                val badge = when (item) {
+        TabBar(
+            items = AdminTab.entries.map {
+                val badge = when (it) {
                     AdminTab.APPROVALS -> pending.size
                     AdminTab.MORE -> unread
                     else -> 0
                 }
-                NavigationBarItem(
-                    selected = tab == item,
-                    onClick = { tab = item },
-                    icon = {
-                        if (badge > 0) BadgedBox(badge = { Badge { Text("$badge") } }) { Icon(item.icon, null) } else Icon(item.icon, null)
-                    },
-                    label = { Text(item.label) },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                        selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    ),
-                )
-            }
-        }
+                TabItem(it.label, it.icon, badge)
+            },
+            selected = tab.ordinal,
+            onSelect = { tab = AdminTab.entries[it] },
+        )
     }
 }

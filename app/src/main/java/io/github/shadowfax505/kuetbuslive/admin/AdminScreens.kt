@@ -22,7 +22,6 @@ import androidx.compose.material.icons.rounded.HowToReg
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -46,6 +45,7 @@ import io.github.shadowfax505.kuetbuslive.model.BusAssignment
 import io.github.shadowfax505.kuetbuslive.model.Complaint
 import io.github.shadowfax505.kuetbuslive.model.ComplaintStatus
 import io.github.shadowfax505.kuetbuslive.model.Timetable
+import io.github.shadowfax505.kuetbuslive.ui.components.AppChip
 import io.github.shadowfax505.kuetbuslive.ui.components.AppTextField
 import io.github.shadowfax505.kuetbuslive.ui.components.EmptyState
 import io.github.shadowfax505.kuetbuslive.ui.components.IconBubble
@@ -53,6 +53,12 @@ import io.github.shadowfax505.kuetbuslive.ui.components.Page
 import io.github.shadowfax505.kuetbuslive.ui.components.Pill
 import io.github.shadowfax505.kuetbuslive.ui.components.SectionTitle
 import io.github.shadowfax505.kuetbuslive.ui.theme.Brand
+import io.github.shadowfax505.kuetbuslive.ui.theme.Tile
+import io.github.shadowfax505.kuetbuslive.ui.components.Avatar
+import io.github.shadowfax505.kuetbuslive.ui.components.CapsuleButton
+import io.github.shadowfax505.kuetbuslive.ui.components.Chevron
+import io.github.shadowfax505.kuetbuslive.ui.components.IconTile
+import io.github.shadowfax505.kuetbuslive.ui.components.Section
 
 // Teachers and drivers waiting for the office, and the drivers who can be turned off.
 @Composable
@@ -61,49 +67,57 @@ fun ApprovalsScreen(vm: AdminViewModel) {
     val staff by vm.staff.collectAsStateWithLifecycle()
     val message by vm.message.collectAsStateWithLifecycle()
     Page("Approvals", "Check every teacher and driver", message = message, onMessageShown = vm::clearMessage) {
-        item { SectionTitle("Waiting (${pending.size})") }
-        if (pending.isEmpty()) {
-            item { EmptyState(Icons.Rounded.HowToReg, "All caught up", "New teacher and driver sign-ups appear here.") }
-        }
-        items(pending, key = { "p-" + it.id }) { user ->
-            PersonCard(user) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilledTonalButton(onClick = { vm.approve(user, true) }) { Text("Approve") }
-                    OutlinedButton(onClick = { vm.setActive(user, false) }) { Text("Decline") }
+        item {
+            if (pending.isEmpty()) {
+                SectionTitle("Waiting")
+                Section { EmptyState(Icons.Rounded.HowToReg, "All caught up", "New teacher and driver sign-ups appear here.") }
+            } else {
+                Section(header = "Waiting (${pending.size})", separatorInset = 70.dp) {
+                    pending.forEach { user ->
+                        PersonRow(user) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                CapsuleButton("Approve", { vm.approve(user, true) }, filled = true)
+                                CapsuleButton("Decline", { vm.setActive(user, false) })
+                            }
+                        }
+                    }
                 }
             }
-            Spacer(Modifier.height(8.dp))
         }
         val approved = staff.filter { it.isApproved }
-        if (approved.isNotEmpty()) item { SectionTitle("Approved (${approved.size})", Modifier.padding(top = 12.dp)) }
-        items(approved, key = { "a-" + it.id }) { user ->
-            PersonCard(user) {
-                if (user.active) {
-                    TextButton(onClick = { vm.setActive(user, false) }) { Text("Deactivate", color = Brand.Danger) }
-                } else {
-                    TextButton(onClick = { vm.setActive(user, true) }) { Text("Reactivate") }
+        if (approved.isNotEmpty()) {
+            item {
+                Section(header = "Approved (${approved.size})", separatorInset = 70.dp) {
+                    approved.forEach { user ->
+                        PersonRow(user) {
+                            if (user.active) {
+                                CapsuleButton("Deactivate", { vm.setActive(user, false) }, color = MaterialTheme.colorScheme.error)
+                            } else {
+                                CapsuleButton("Reactivate", { vm.setActive(user, true) })
+                            }
+                        }
+                    }
                 }
             }
-            Spacer(Modifier.height(8.dp))
         }
     }
 }
 
 @Composable
-private fun PersonCard(user: AppUser, actions: @Composable () -> Unit) {
-    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface).padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconBubble(Icons.Rounded.Person, if (user.role.raw == "driver") MaterialTheme.colorScheme.primary else Brand.Grey, size = 40.dp)
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(user.name, style = MaterialTheme.typography.titleSmall)
-                Text("${user.role.title} · ${user.role.idLabel} ${user.kuetId.orEmpty()}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(user.email, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun PersonRow(user: AppUser, actions: @Composable () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Avatar(user.name, size = 40.dp)
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(user.name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+                if (!user.active) Pill("Inactive", Brand.Unknown)
             }
-            if (!user.active) Pill("Inactive", Brand.Unknown)
+            Text("${user.role.title} · ${user.role.idLabel} ${user.kuetId.orEmpty()}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(user.email, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(10.dp))
+            actions()
         }
-        Spacer(Modifier.height(8.dp))
-        actions()
     }
 }
 
@@ -122,47 +136,58 @@ fun FleetScreen(admin: AppUser, vm: AdminViewModel, onBack: () -> Unit) {
     Page("Drivers & buses", "Who drives each bus today", onBack = onBack, message = message, onMessageShown = vm::clearMessage) {
         val open = absences.filter { it.status == AbsenceStatus.OPEN }
         if (open.isNotEmpty()) {
-            item { SectionTitle("Can't drive (${open.size})") }
-            items(open, key = { "abs-" + it.id }) { absence ->
-                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest).padding(16.dp)) {
-                    Text(absence.driverName, style = MaterialTheme.typography.titleSmall)
-                    Text("${absence.fromDate} – ${absence.untilDate} · ${absence.reason}", style = MaterialTheme.typography.bodySmall)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilledTonalButton(onClick = { covering = absence }) { Text("Arrange cover") }
-                        TextButton(onClick = { vm.cancelAbsence(absence) }) { Text("Cancel") }
+            item {
+                Section(header = "Can't drive (${open.size})") {
+                    open.forEach { absence ->
+                        Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                            Text(absence.driverName, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                            Text(
+                                "${absence.fromDate} – ${absence.untilDate} · ${absence.reason}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                CapsuleButton("Arrange cover", { covering = absence }, filled = true)
+                                CapsuleButton("Cancel", { vm.cancelAbsence(absence) })
+                            }
+                        }
                     }
                 }
-                Spacer(Modifier.height(8.dp))
             }
         }
-        item { SectionTitle("Buses", Modifier.padding(top = 8.dp)) }
-        if (fleet.isEmpty()) {
-            item { EmptyState(Icons.Rounded.DirectionsBus, "No buses yet", "Buses appear here from the trip names in the timetable.") }
-        }
-        items(fleet, key = { it.id }) { row ->
-            val today = row.bus?.let { BusAssignment.driverFor(it, now) }
-            val coverActive = BusAssignment.isCoverActive(row.bus?.cover, now)
-            Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface)
-                    .clickable { editing = row }.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconBubble(Icons.Rounded.DirectionsBus, if (today == null) Brand.Unknown else MaterialTheme.colorScheme.primary)
-                Spacer(Modifier.width(14.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(row.name, style = MaterialTheme.typography.titleMedium)
-                    Text("Regular: ${nameOf(row.bus?.defaultDriverId)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    row.bus?.cover?.let { c ->
-                        Text("Cover: ${nameOf(c.driverId)}, ${c.fromDate} – ${c.untilDate}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    val tripCount = row.bus?.tripDrivers?.size ?: 0
-                    if (tripCount > 0) {
-                        Text("Trip drivers: $tripCount", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        item {
+            if (fleet.isEmpty()) {
+                SectionTitle("Buses")
+                Section { EmptyState(Icons.Rounded.DirectionsBus, "No buses yet", "Buses appear here from the trip names in the timetable.") }
+            } else {
+                Section(header = "Buses", footer = "Tap a bus to change its regular driver or arrange a cover.", separatorInset = 60.dp) {
+                    fleet.forEach { row ->
+                        val today = row.bus?.let { BusAssignment.driverFor(it, now) }
+                        val coverActive = BusAssignment.isCoverActive(row.bus?.cover, now)
+                        Row(
+                            Modifier.fillMaxWidth().clickable { editing = row }.padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            IconTile(Icons.Rounded.DirectionsBus, if (today == null) Tile.Grey else Tile.Blue)
+                            Spacer(Modifier.width(14.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(row.name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                                Text("Regular: ${nameOf(row.bus?.defaultDriverId)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                row.bus?.cover?.let { c ->
+                                    Text("Cover: ${nameOf(c.driverId)}, ${c.fromDate} – ${c.untilDate}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                val tripCount = row.bus?.tripDrivers?.size ?: 0
+                                if (tripCount > 0) {
+                                    Text("Trip drivers: $tripCount", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                            Pill(if (today == null) "No driver" else if (coverActive) "Cover" else "Ready", if (today == null) Brand.Danger else Brand.Seats)
+                            Chevron()
+                        }
                     }
                 }
-                Pill(if (today == null) "No driver today" else if (coverActive) "Cover today" else "Ready", if (today == null) Brand.Danger else Brand.Seats)
             }
-            Spacer(Modifier.height(8.dp))
         }
     }
 
@@ -238,8 +263,8 @@ fun FleetScreen(admin: AppUser, vm: AdminViewModel, onBack: () -> Unit) {
 @Composable
 private fun DriverChips(drivers: List<AppUser>, selected: String?, allowNobody: Boolean, nobodyLabel: String = "Nobody", onSelect: (String?) -> Unit) {
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (allowNobody) FilterChip(selected == null, { onSelect(null) }, { Text(nobodyLabel) })
-        drivers.forEach { d -> FilterChip(selected == d.id, { onSelect(d.id) }, { Text(d.name) }) }
+        if (allowNobody) AppChip(selected == null, { onSelect(null) }, { Text(nobodyLabel) })
+        drivers.forEach { d -> AppChip(selected == d.id, { onSelect(d.id) }, { Text(d.name) }) }
     }
 }
 
@@ -254,8 +279,8 @@ fun ComplaintsInboxScreen(vm: AdminViewModel, campus: CampusViewModel, onBack: (
     Page("Complaints", "${complaints.count { !it.readByAdmin }} unread", onBack = onBack, message = message, onMessageShown = campus::clearMessage) {
         item {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(filter == null, { filter = null }, { Text("All") })
-                ComplaintStatus.entries.forEach { s -> FilterChip(filter == s, { filter = s }, { Text(s.title) }) }
+                AppChip(filter == null, { filter = null }, { Text("All") })
+                ComplaintStatus.entries.forEach { s -> AppChip(filter == s, { filter = s }, { Text(s.title) }) }
             }
         }
         if (shown.isEmpty()) item { EmptyState(Icons.Rounded.Feedback, "Nothing here", "Complaints from riders and drivers appear here.") }
@@ -278,7 +303,7 @@ fun ComplaintsInboxScreen(vm: AdminViewModel, campus: CampusViewModel, onBack: (
                     Text("${complaint.userName} (${complaint.userRole})", style = MaterialTheme.typography.labelLarge)
                     Text(complaint.text, style = MaterialTheme.typography.bodyMedium)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ComplaintStatus.entries.forEach { s -> FilterChip(status == s, { status = s }, { Text(s.title) }) }
+                        ComplaintStatus.entries.forEach { s -> AppChip(status == s, { status = s }, { Text(s.title) }) }
                     }
                     AppTextField(reply, { reply = it }, "Reply (the sender sees it)", singleLine = false, minLines = 3)
                 }

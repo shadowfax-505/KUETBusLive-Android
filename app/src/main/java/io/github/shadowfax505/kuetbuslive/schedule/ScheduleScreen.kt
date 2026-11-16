@@ -23,7 +23,6 @@ import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -49,6 +48,13 @@ import io.github.shadowfax505.kuetbuslive.model.Timetable
 import io.github.shadowfax505.kuetbuslive.model.TripDays
 import io.github.shadowfax505.kuetbuslive.model.TripPeriod
 import io.github.shadowfax505.kuetbuslive.model.UserRole
+import io.github.shadowfax505.kuetbuslive.ui.components.AppChip
+import io.github.shadowfax505.kuetbuslive.ui.components.Chevron
+import io.github.shadowfax505.kuetbuslive.ui.components.IconTile
+import io.github.shadowfax505.kuetbuslive.ui.components.Section
+import io.github.shadowfax505.kuetbuslive.ui.components.SegmentedControl
+import androidx.compose.material.icons.rounded.DirectionsBus
+import androidx.compose.material3.IconButton
 import io.github.shadowfax505.kuetbuslive.ui.components.AppTextField
 import io.github.shadowfax505.kuetbuslive.ui.components.AudienceBadge
 import io.github.shadowfax505.kuetbuslive.ui.components.EmptyState
@@ -79,22 +85,17 @@ fun ScheduleScreen(user: AppUser, campus: CampusViewModel) {
         subtitle = if (Timetable.dhakaTime(now).dayOfWeek.value == 5) "No buses on Friday" else "Official KUET timetable",
         message = message,
         onMessageShown = campus::clearMessage,
-        floating = {
+        actions = {
             if (isAdmin) {
-                ExtendedFloatingActionButton(
-                    onClick = { editing = blankSchedule(days) },
-                    icon = { Icon(Icons.Rounded.Add, null) },
-                    text = { Text("Add trip") },
-                )
+                IconButton(onClick = { editing = blankSchedule(days) }) {
+                    Icon(Icons.Rounded.Add, "Add trip", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+                }
             }
         },
     ) {
         item {
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TripDays.entries.forEach { option ->
-                    FilterChip(selected = days == option, onClick = { days = option }, label = { Text(option.title) }, shape = RoundedCornerShape(14.dp))
-                }
-            }
+            val options = TripDays.entries
+            SegmentedControl(options.map { it.title }, options.indexOf(days), { days = options[it] }, Modifier.padding(bottom = 4.dp))
         }
         if (next != null && !isAdmin) {
             item { NextTripCard(next, now) }
@@ -105,10 +106,10 @@ fun ScheduleScreen(user: AppUser, campus: CampusViewModel) {
         TripPeriod.entries.forEach { period ->
             val trips = visible.filter { it.period == period }
             if (trips.isNotEmpty()) {
-                item(key = "header-${period.raw}") { SectionTitle(period.title) }
-                items(trips, key = { it.id }) { trip ->
-                    TripRow(trip, now, onClick = if (isAdmin) ({ editing = trip }) else null)
-                    Spacer(Modifier.height(8.dp))
+                item(key = "section-${period.raw}") {
+                    Section(header = period.title, separatorInset = 104.dp) {
+                        trips.forEach { trip -> TripRow(trip, now, onClick = if (isAdmin) ({ editing = trip }) else null) }
+                    }
                 }
             }
         }
@@ -132,28 +133,28 @@ private fun blankSchedule(days: TripDays) = BusSchedule(
 @Composable
 private fun NextTripCard(trip: BusSchedule, now: Long) {
     val minutes = Timetable.minutesUntil(trip.campusTime, now)
-    Column(
-        Modifier
-            .padding(top = 12.dp, bottom = 4.dp)
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(io.github.shadowfax505.kuetbuslive.ui.components.BrandGradient)
-            .padding(20.dp),
-    ) {
-        Text("YOUR NEXT BUS", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.75f))
-        Spacer(Modifier.height(6.dp))
-        Text("${trip.tripName} · ${trip.spot}", style = MaterialTheme.typography.headlineSmall, color = Color.White)
-        Spacer(Modifier.height(4.dp))
-        Text(
-            "Leaves KUET at ${Timetable.display(trip.campusTime)}" + (minutes?.let { " · in ${io.github.shadowfax505.kuetbuslive.rider.formatMinutes(it)}" } ?: ""),
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.9f),
-        )
-        Text(
-            "Leaves ${trip.spot} at ${Timetable.display(trip.spotTime)}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.9f),
-        )
+    Section(Modifier.padding(top = 12.dp)) {
+        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconTile(Icons.Rounded.DirectionsBus, Brand.Seats, size = 44.dp)
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text("YOUR NEXT BUS", style = MaterialTheme.typography.labelMedium, color = Brand.Seats, fontWeight = FontWeight.SemiBold)
+                Text("${trip.tripName} · ${trip.spot}", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    "Leaves KUET ${Timetable.display(trip.campusTime)} · ${trip.spot} ${Timetable.display(trip.spotTime)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            minutes?.let {
+                Text(
+                    io.github.shadowfax505.kuetbuslive.rider.formatMinutes(it),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+        }
     }
 }
 
@@ -163,20 +164,18 @@ private fun TripRow(trip: BusSchedule, now: Long, onClick: (() -> Unit)?) {
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.surface)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(16.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(76.dp)) {
-            Text(Timetable.display(trip.campusTime), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Column(Modifier.width(76.dp)) {
+            Text(Timetable.display(trip.campusTime), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
             Text("from KUET", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Box(Modifier.padding(horizontal = 12.dp).size(width = 3.dp, height = 44.dp).clip(RoundedCornerShape(2.dp)).background(trip.audience.color()))
+        Box(Modifier.padding(end = 12.dp).size(width = 3.dp, height = 40.dp).clip(RoundedCornerShape(2.dp)).background(trip.audience.color()))
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(trip.tripName, style = MaterialTheme.typography.titleSmall)
+                Text(trip.tripName, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(Modifier.width(8.dp))
                 AudienceBadge(trip.audience)
             }
@@ -190,6 +189,7 @@ private fun TripRow(trip: BusSchedule, now: Long, onClick: (() -> Unit)?) {
             }
         }
         if (upcoming) Pill("Today", Brand.Seats)
+        if (onClick != null) Chevron()
     }
 }
 
@@ -222,10 +222,10 @@ private fun ScheduleEditDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TripDays.entries.forEach { FilterChip(days == it, { days = it }, { Text(it.title) }) }
+                    TripDays.entries.forEach { AppChip(days == it, { days = it }, { Text(it.title) }) }
                 }
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TripPeriod.entries.forEach { FilterChip(period == it, { period = it }, { Text(it.title) }) }
+                    TripPeriod.entries.forEach { AppChip(period == it, { period = it }, { Text(it.title) }) }
                 }
                 AppTextField(campusTime, { campusTime = it }, "Leaves KUET (HH:mm)")
                 AppTextField(spot, { spot = it }, "Starting spot in the city")

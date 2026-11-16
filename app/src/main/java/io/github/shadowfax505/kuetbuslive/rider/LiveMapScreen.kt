@@ -47,12 +47,10 @@ import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.TrendingDown
 import androidx.compose.material.icons.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.ZoomOutMap
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -85,6 +83,7 @@ import io.github.shadowfax505.kuetbuslive.model.Bus
 import io.github.shadowfax505.kuetbuslive.model.CrowdLevel
 import io.github.shadowfax505.kuetbuslive.model.Geo
 import io.github.shadowfax505.kuetbuslive.model.Timetable
+import io.github.shadowfax505.kuetbuslive.ui.components.TintedButton
 import io.github.shadowfax505.kuetbuslive.ui.components.AudienceBadge
 import io.github.shadowfax505.kuetbuslive.ui.components.Avatar
 import io.github.shadowfax505.kuetbuslive.ui.components.CrowdPill
@@ -327,7 +326,7 @@ private fun BusList(
         }
         if (user.favoriteStop == null) {
             Spacer(Modifier.height(12.dp))
-            FilledTonalButton(onClick = onPickStop, modifier = Modifier.fillMaxWidth().height(48.dp), shape = RoundedCornerShape(16.dp)) {
+            TintedButton(onClick = onPickStop, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(14.dp)) {
                 Icon(Icons.Rounded.Place, null)
                 Spacer(Modifier.width(8.dp))
                 Text("Choose your stop to see ETAs")
@@ -340,7 +339,7 @@ private fun BusList(
 private fun NoBusesCard(user: AppUser, state: RiderState) {
     val next = Timetable.nextTrip(state.schedules, user.role, state.nowMillis)
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(16.dp),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
@@ -467,7 +466,7 @@ private fun TripCard(user: AppUser, bus: Bus, state: RiderState, vm: RiderViewMo
                 }
             }
             if (stop == null) {
-                FilledTonalButton(onClick = onPickStop, shape = RoundedCornerShape(14.dp)) { Text("Choose") }
+                TintedButton(onClick = onPickStop, shape = RoundedCornerShape(14.dp)) { Text("Choose") }
             } else {
                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Pill(bus.speedKmh?.let { "$it km/h" } ?: "--", MaterialTheme.colorScheme.secondary, icon = Icons.Rounded.Speed)
@@ -547,7 +546,7 @@ private fun TripCard(user: AppUser, bus: Bus, state: RiderState, vm: RiderViewMo
                     Text("You're on this bus", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
                 }
                 if (onBoard) {
-                    OutlinedButton(onClick = { vm.reportCrowded(bus) }, shape = RoundedCornerShape(14.dp)) {
+                    TintedButton(onClick = { vm.reportCrowded(bus) }, shape = RoundedCornerShape(14.dp)) {
                         Icon(Icons.Rounded.GroupOff, null, Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
                         Text("It's overcrowded")
@@ -558,10 +557,10 @@ private fun TripCard(user: AppUser, bus: Bus, state: RiderState, vm: RiderViewMo
 
         Spacer(Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlinedButton(
+            TintedButton(
                 onClick = { vm.toggleFollow() },
-                modifier = Modifier.height(56.dp),
-                shape = RoundedCornerShape(18.dp),
+                modifier = Modifier.height(50.dp),
+                shape = RoundedCornerShape(14.dp),
             ) {
                 Icon(Icons.Rounded.GpsFixed, null, tint = if (following) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.width(6.dp))
