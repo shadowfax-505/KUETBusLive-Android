@@ -18,6 +18,7 @@ import io.github.shadowfax505.kuetbuslive.model.ComplaintStatus
 import io.github.shadowfax505.kuetbuslive.model.CrowdLevel
 import io.github.shadowfax505.kuetbuslive.model.DriverAbsence
 import io.github.shadowfax505.kuetbuslive.model.FleetBus
+import io.github.shadowfax505.kuetbuslive.model.MyTrip
 import io.github.shadowfax505.kuetbuslive.model.SpecialDay
 import io.github.shadowfax505.kuetbuslive.model.UserRole
 import io.github.shadowfax505.kuetbuslive.model.Wave
@@ -87,6 +88,9 @@ object Repository {
         db.collection("users").document(uid).collection("places").get().await().documents.forEach {
             it.reference.delete().await()
         }
+        db.collection("users").document(uid).collection("myTrips").get().await().documents.forEach {
+            it.reference.delete().await()
+        }
         db.collection("complaints").whereEqualTo("uid", uid).get().await().documents.forEach {
             it.reference.delete().await()
         }
@@ -113,6 +117,36 @@ object Repository {
 
     suspend fun setActive(uid: String, active: Boolean) {
         db.collection("users").document(uid).update("active", active).await()
+    }
+
+    // ---------- My trips (users/{uid}/myTrips/{scheduleId}, same fields as iOS) ----------
+
+    fun myTrips(uid: String): Flow<List<MyTrip>> =
+        db.collection("users").document(uid).collection("myTrips").live { d ->
+            @Suppress("UNCHECKED_CAST")
+            val days = (d.get("days") as? List<Any?>)?.filterIsInstance<String>() ?: return@live null
+            MyTrip(
+                scheduleId = d.id,
+                leg = MyTrip.Leg.from(d.getString("leg")),
+                days = days,
+                remindMinutes = (d.getLong("remindMinutes") ?: 0L).toInt(),
+                createdAtMillis = d.getTimestamp("createdAt")?.toDate()?.time ?: 0L,
+            )
+        }
+
+    suspend fun saveMyTrip(uid: String, trip: MyTrip) {
+        db.collection("users").document(uid).collection("myTrips").document(trip.scheduleId).set(
+            mapOf(
+                "leg" to trip.leg.raw,
+                "days" to trip.days,
+                "remindMinutes" to trip.remindMinutes,
+                "createdAt" to trip.createdAtMillis.toTimestamp(),
+            )
+        ).await()
+    }
+
+    suspend fun deleteMyTrip(uid: String, scheduleId: String) {
+        db.collection("users").document(uid).collection("myTrips").document(scheduleId).delete().await()
     }
 
     // ---------- Timetable and routes ----------

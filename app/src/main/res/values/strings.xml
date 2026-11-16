@@ -16,4 +16,6 @@
     <string name="widget_sign_in">Open the app to sign in</string>
     <string name="departure_channel_name">Bus left campus</string>
     <string name="departure_channel_description">Tells you when a bus on your route leaves KUET.</string>
+    <string name="reminder_channel_name">My trips reminders</string>
+    <string name="reminder_channel_description">Reminds you before a bus you pinned in My trips leaves.</string>
 </resources>

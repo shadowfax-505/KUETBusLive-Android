@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import io.github.shadowfax505.kuetbuslive.widget.WidgetStore
 import io.github.shadowfax505.kuetbuslive.push.PushTopics
+import io.github.shadowfax505.kuetbuslive.reminders.TripReminders
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -61,6 +62,9 @@ fun RiderHome(session: SessionViewModel, user: AppUser) {
     val context = LocalContext.current
     val schedules by campus.schedules.collectAsStateWithLifecycle()
     LaunchedEffect(schedules, user.role) { WidgetStore.save(context, schedules, user.role) }
+    // "My trips" reminders follow the pins and the timetable.
+    val myTrips by campus.myTrips.collectAsStateWithLifecycle()
+    LaunchedEffect(myTrips, schedules) { TripReminders.update(context, myTrips, schedules) }
     // Pushes for the route that has my stop ("Normal-2 just left campus"), as on iOS.
     LaunchedEffect(routes, user.favoriteStopName, user.role) {
         val stop = user.favoriteStopName ?: return@LaunchedEffect

@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -74,6 +75,12 @@ fun ScheduleScreen(user: AppUser, campus: CampusViewModel) {
     val todayIsSaturday = Timetable.dhakaTime(now).dayOfWeek.value == 6
     var days by rememberSaveable { mutableStateOf(if (todayIsSaturday) TripDays.SATURDAY else TripDays.SUN_TO_THU) }
     var editing by remember { mutableStateOf<BusSchedule?>(null) }
+    // Riders pin the trips they usually take ("My trips").
+    val canPin = user.role == UserRole.STUDENT || user.role == UserRole.TEACHER
+    val myTrips by campus.myTrips.collectAsStateWithLifecycle()
+    var pinning by remember { mutableStateOf<BusSchedule?>(null) }
+    val pinned = myTrips.mapNotNull { t -> schedules.firstOrNull { it.id == t.scheduleId }?.let { t to it } }
+        .sortedBy { (t, s) -> Timetable.minutes(t.time(s)) ?: 0 }
 
     val visible = schedules
         .filter { it.days == days && (isAdmin || it.audience.canBoard(user.role)) }
@@ -97,6 +104,13 @@ fun ScheduleScreen(user: AppUser, campus: CampusViewModel) {
             val options = TripDays.entries
             SegmentedControl(options.map { it.title }, options.indexOf(days), { days = options[it] }, Modifier.padding(bottom = 4.dp))
         }
+        if (canPin && pinned.isNotEmpty()) {
+            item(key = "my-trips") {
+                Section(Modifier.padding(top = 12.dp), header = "My trips", separatorInset = 52.dp) {
+                    pinned.forEach { (trip, schedule) -> MyTripRow(trip, schedule) { pinning = schedule } }
+                }
+            }
+        }
         if (next != null && !isAdmin) {
             item { NextTripCard(next, now) }
         }
@@ -108,11 +122,28 @@ fun ScheduleScreen(user: AppUser, campus: CampusViewModel) {
             if (trips.isNotEmpty()) {
                 item(key = "section-${period.raw}") {
                     Section(header = period.title, separatorInset = 104.dp) {
-                        trips.forEach { trip -> TripRow(trip, now, onClick = if (isAdmin) ({ editing = trip }) else null) }
+                        trips.forEach { trip ->
+                            val onClick: (() -> Unit)? = when {
+                                isAdmin -> ({ editing = trip })
+                                canPin -> ({ pinning = trip })
+                                else -> null
+                            }
+                            TripRow(trip, now, pinned = myTrips.any { it.scheduleId == trip.id }, onClick = onClick)
+                        }
                     }
                 }
             }
         }
+    }
+
+    pinning?.let { schedule ->
+        MyTripDialog(
+            schedule = schedule,
+            existing = myTrips.firstOrNull { it.scheduleId == schedule.id },
+            onDismiss = { pinning = null },
+            onSave = { campus.saveMyTrip(it) { pinning = null } },
+            onRemove = { campus.removeMyTrip(it) { pinning = null } },
+        )
     }
 
     editing?.let { trip ->
@@ -159,7 +190,7 @@ private fun NextTripCard(trip: BusSchedule, now: Long) {
 }
 
 @Composable
-private fun TripRow(trip: BusSchedule, now: Long, onClick: (() -> Unit)?) {
+private fun TripRow(trip: BusSchedule, now: Long, pinned: Boolean = false, onClick: (() -> Unit)?) {
     val upcoming = Timetable.isUpcoming(trip, now)
     Row(
         Modifier
@@ -188,6 +219,7 @@ private fun TripRow(trip: BusSchedule, now: Long, onClick: (() -> Unit)?) {
                 Text(trip.remarks, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+        if (pinned) Icon(Icons.Rounded.PushPin, "In My trips", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(end = 6.dp).size(18.dp))
         if (upcoming) Pill("Today", Brand.Seats)
         if (onClick != null) Chevron()
     }

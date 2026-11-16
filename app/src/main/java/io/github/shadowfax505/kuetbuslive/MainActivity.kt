@@ -17,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import io.github.shadowfax505.kuetbuslive.widget.WidgetStore
 import io.github.shadowfax505.kuetbuslive.push.PushTopics
+import io.github.shadowfax505.kuetbuslive.reminders.TripReminders
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -58,6 +59,7 @@ private fun AppRoot(session: SessionViewModel = viewModel()) {
         if (screen is Screen.SignedOut) {
             WidgetStore.clear(context)
             PushTopics.leave(context)
+            TripReminders.clear(context)
         }
     }
     // Screen changes (signed in, approved, verified) fade into each other.

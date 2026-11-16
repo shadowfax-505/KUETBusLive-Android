@@ -12,6 +12,7 @@ import io.github.shadowfax505.kuetbuslive.model.BusSchedule
 import io.github.shadowfax505.kuetbuslive.model.Complaint
 import io.github.shadowfax505.kuetbuslive.model.ComplaintCategory
 import io.github.shadowfax505.kuetbuslive.model.ComplaintStatus
+import io.github.shadowfax505.kuetbuslive.model.MyTrip
 import io.github.shadowfax505.kuetbuslive.model.Stop
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,6 +47,19 @@ class CampusViewModel(application: Application) : AndroidViewModel(application) 
         .flatMapLatest { uid -> if (uid == null) flowOf(emptyList()) else Repository.myComplaints(uid) }
         .map { list -> list.sortedByDescending { it.createdAtMillis } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val myTrips: StateFlow<List<MyTrip>> = userId
+        .flatMapLatest { uid -> if (uid == null) flowOf(emptyList()) else Repository.myTrips(uid) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun saveMyTrip(trip: MyTrip, done: () -> Unit) = launch("Saved to My trips.", done) {
+        require(trip.days.isNotEmpty()) { "Pick at least one day." }
+        Repository.saveMyTrip(userId.value ?: error("You are not signed in."), trip)
+    }
+
+    fun removeMyTrip(trip: MyTrip, done: () -> Unit) = launch("Removed from My trips.", done) {
+        Repository.deleteMyTrip(userId.value ?: error("You are not signed in."), trip.scheduleId)
+    }
 
     private val _readNews = MutableStateFlow(prefs.readAnnouncements)
     val readNews: StateFlow<Set<String>> = _readNews.asStateFlow()
