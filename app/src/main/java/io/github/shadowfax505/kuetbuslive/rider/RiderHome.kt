@@ -12,6 +12,9 @@ import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.Route
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
+import io.github.shadowfax505.kuetbuslive.widget.WidgetStore
+import io.github.shadowfax505.kuetbuslive.push.PushTopics
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -54,6 +57,16 @@ fun RiderHome(session: SessionViewModel, user: AppUser) {
     val unread = news.count { it.id !in read }
 
     LaunchedEffect(user.id) { campus.setUser(user.id) }
+    // The home screen widget shows the next bus from the same timetable.
+    val context = LocalContext.current
+    val schedules by campus.schedules.collectAsStateWithLifecycle()
+    LaunchedEffect(schedules, user.role) { WidgetStore.save(context, schedules, user.role) }
+    // Pushes for the route that has my stop ("Normal-2 just left campus"), as on iOS.
+    LaunchedEffect(routes, user.favoriteStopName, user.role) {
+        val stop = user.favoriteStopName ?: return@LaunchedEffect
+        if (routes.isEmpty()) return@LaunchedEffect
+        PushTopics.follow(context, routes.firstOrNull { r -> r.stops.any { it.name == stop } }?.id, user.role)
+    }
     BackHandler(enabled = showComplaints || tab != RiderTab.MAP) {
         if (showComplaints) showComplaints = false else tab = RiderTab.MAP
     }

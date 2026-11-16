@@ -77,6 +77,33 @@
             </intent-filter>
         </activity-alias>
 
+        <!-- "Normal-2 just left campus" pushes for the rider's route (same topics as iOS). -->
+        <service
+            android:name=".push.DeparturePushService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="bus_left_campus" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_bus" />
+
+        <!-- Home screen widget: the next bus this rider can take. -->
+        <receiver
+            android:name=".widget.NextBusWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/next_bus_widget_info" />
+        </receiver>
+
         <!-- Keeps sharing the bus position while the driver's screen is off. -->
         <service
             android:name=".driver.TripLocationService"

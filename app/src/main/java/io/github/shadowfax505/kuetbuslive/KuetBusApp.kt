@@ -26,11 +26,16 @@ class KuetBusApp : Application() {
             NotificationChannel(CHANNEL_ARRIVAL, getString(R.string.arrival_channel_name), NotificationManager.IMPORTANCE_HIGH)
                 .apply { description = getString(R.string.arrival_channel_description) }
         )
+        manager.createNotificationChannel(
+            NotificationChannel(CHANNEL_DEPARTURE, getString(R.string.departure_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
+                .apply { description = getString(R.string.departure_channel_description) }
+        )
     }
 
     companion object {
         const val CHANNEL_TRIP = "live_trip"
         const val CHANNEL_ARRIVAL = "bus_arriving"
+        const val CHANNEL_DEPARTURE = "bus_left_campus"
 
         var firebaseReady = false
             private set

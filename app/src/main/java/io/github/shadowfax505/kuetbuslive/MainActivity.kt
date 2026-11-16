@@ -13,6 +13,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
+import io.github.shadowfax505.kuetbuslive.widget.WidgetStore
+import io.github.shadowfax505.kuetbuslive.push.PushTopics
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -48,6 +52,14 @@ class MainActivity : ComponentActivity() {
 private fun AppRoot(session: SessionViewModel = viewModel()) {
     val state by session.state.collectAsStateWithLifecycle()
     val screen = session.screen(state)
+    // Signed out (or the account deleted): the home screen widget forgets the timetable.
+    val context = LocalContext.current
+    LaunchedEffect(screen is Screen.SignedOut) {
+        if (screen is Screen.SignedOut) {
+            WidgetStore.clear(context)
+            PushTopics.leave(context)
+        }
+    }
     // Screen changes (signed in, approved, verified) fade into each other.
     AnimatedContent(
         targetState = screen,
