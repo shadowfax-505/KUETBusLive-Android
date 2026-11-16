@@ -1,5 +1,6 @@
 package io.github.shadowfax505.kuetbuslive.ui.components
 
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
@@ -659,7 +660,12 @@ fun InfoBanner(message: String?, modifier: Modifier = Modifier) {
 
 // The app icon as it looks on the home screen.
 @Composable
-fun AppIcon(modifier: Modifier = Modifier, size: Dp = 96.dp) {
+fun AppIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 96.dp,
+    @DrawableRes background: Int = R.drawable.ic_launcher_background,
+    @DrawableRes foreground: Int = R.drawable.ic_launcher_foreground,
+) {
     val shape = RoundedCornerShape(size * 0.23f)
     Box(
         modifier
@@ -668,9 +674,9 @@ fun AppIcon(modifier: Modifier = Modifier, size: Dp = 96.dp) {
             .clip(shape)
             .then(if (isDarkTheme()) Modifier.border(1.dp, Color.White.copy(alpha = 0.12f), shape) else Modifier),
     ) {
-        Image(painterResource(R.drawable.ic_launcher_background), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
+        Image(painterResource(background), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
         // Launchers show the middle 72 of the 108 units of an adaptive icon.
-        Image(painterResource(R.drawable.ic_launcher_foreground), null, Modifier.fillMaxSize().scale(1.5f))
+        Image(painterResource(foreground), null, Modifier.fillMaxSize().scale(1.5f))
     }
 }
 

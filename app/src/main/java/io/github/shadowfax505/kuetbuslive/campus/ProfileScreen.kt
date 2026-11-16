@@ -1,11 +1,17 @@
 package io.github.shadowfax505.kuetbuslive.campus
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.Campaign
@@ -24,12 +30,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.shadowfax505.kuetbuslive.data.AppIconChoice
+import io.github.shadowfax505.kuetbuslive.data.AppIcons
 import io.github.shadowfax505.kuetbuslive.data.Prefs
 import io.github.shadowfax505.kuetbuslive.model.AppUser
 import io.github.shadowfax505.kuetbuslive.ui.components.ActionRow
+import io.github.shadowfax505.kuetbuslive.ui.components.AppIcon
 import io.github.shadowfax505.kuetbuslive.ui.components.AppSwitch
 import io.github.shadowfax505.kuetbuslive.ui.components.AppTextField
 import io.github.shadowfax505.kuetbuslive.ui.components.Avatar
@@ -52,6 +63,7 @@ fun ProfileScreen(
     val prefs = remember { Prefs(context) }
     val message by campus.message.collectAsStateWithLifecycle()
     var alerts by remember { mutableStateOf(prefs.arrivalAlerts) }
+    var appIcon by remember { mutableStateOf(AppIcons.current(context)) }
     var editingName by remember { mutableStateOf(false) }
     var confirmSignOut by remember { mutableStateOf(false) }
 
@@ -96,6 +108,11 @@ fun ProfileScreen(
             }
         }
         item {
+            Section(header = "App icon", footer = "Your home screen can take a few seconds to show the new icon.") {
+                AppIconPicker(appIcon) { appIcon = it; AppIcons.set(context, it) }
+            }
+        }
+        item {
             Section(header = "Help", separatorInset = 60.dp) {
                 if (onOpenNews != null) SettingRow(Icons.Rounded.Campaign, "News", "From the transport office", Tile.Pink, onClick = onOpenNews)
                 SettingRow(Icons.Rounded.Feedback, "Complaints", "Send one and read replies", Tile.Orange, onClick = onOpenComplaints)
@@ -125,5 +142,42 @@ fun ProfileScreen(
             confirmButton = { TextButton(onClick = { confirmSignOut = false; onSignOut() }) { Text("Sign Out", color = MaterialTheme.colorScheme.error) } },
             dismissButton = { TextButton(onClick = { confirmSignOut = false }) { Text("Cancel") } },
         )
+    }
+}
+
+@Composable
+private fun AppIconPicker(selected: AppIconChoice, onPick: (AppIconChoice) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+    ) {
+        AppIconChoice.entries.forEach { choice ->
+            val isSelected = choice == selected
+            Column(
+                Modifier
+                    .clip(RoundedCornerShape(14.dp))
+                    .clickable(onClickLabel = "Use the ${choice.title} icon") { onPick(choice) }
+                    .padding(6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Box(
+                    Modifier
+                        .border(
+                            2.dp,
+                            if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                            RoundedCornerShape(17.dp),
+                        )
+                        .padding(4.dp),
+                ) {
+                    AppIcon(size = 56.dp, background = choice.background, foreground = choice.foreground)
+                }
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    choice.title,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
