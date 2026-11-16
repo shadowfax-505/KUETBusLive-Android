@@ -20,6 +20,20 @@ data class RouteInfo(
     val minutes: Int get() = ceil(durationSeconds / 60).toInt()
     val kilometres: Double get() = distanceMetres / 1000
     val summary: String get() = "$minutes min · ${"%.1f".format(kilometres)} km"
+
+    companion object {
+        // When the routing server can't be reached: the distance along the route (or the
+        // straight line, a third longer for the roads) at a city bus's 18 km/h. Same
+        // numbers on iOS. null once the bus has passed the stop.
+        const val FALLBACK_SPEED = 5.0      // metres per second
+        const val ROAD_FACTOR = 1.35
+
+        fun estimate(alongRoute: Double?, straightLine: Double): RouteInfo? {
+            val distance = alongRoute ?: (straightLine * ROAD_FACTOR)
+            if (distance < 0) return null
+            return RouteInfo(distance / FALLBACK_SPEED, distance, emptyList())
+        }
+    }
 }
 
 object Osrm {

@@ -229,7 +229,11 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
         if (!force && last != null && now - last < Osrm.REFRESH_MILLIS) return
         lastEtaFetch[bus.id] = now
         viewModelScope.launch {
-            val info = Osrm.route(listOf(bus.position, stop.position))
+            // The routing server is down or unreachable: estimate from the route instead.
+            val info = Osrm.route(listOf(bus.position, stop.position)) ?: RouteInfo.estimate(
+                _state.value.routePaths[bus.routeId]?.takeIf { it.size >= 2 }?.let { Geo.metresAhead(bus.position, stop.position, it) },
+                Geo.distanceMetres(bus.position, stop.position),
+            )
             _state.update {
                 if (info == null) it.copy(etaFailed = it.etaFailed + bus.id)
                 else it.copy(eta = it.eta + (bus.id to info), etaFailed = it.etaFailed - bus.id)
