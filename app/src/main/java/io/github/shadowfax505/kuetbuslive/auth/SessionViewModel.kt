@@ -87,10 +87,11 @@ class SessionViewModel : ViewModel() {
     fun screen(state: SessionState): Screen {
         if (state.uid == null) return Screen.SignedOut
         val profile = state.profile ?: return Screen.Loading
+        // A turned-off account is told so first, as on iOS, even before the email link.
+        if (!profile.active) return Screen.Inactive
         if (verifier.needsEmailVerification(profile.role, profile.email) && !state.emailVerified) {
             return Screen.VerifyEmail(profile.email)
         }
-        if (!profile.active) return Screen.Inactive
         if (profile.needsApproval && !profile.isApproved) return Screen.WaitingForApproval(profile)
         return Screen.Home(profile)
     }
@@ -111,7 +112,7 @@ class SessionViewModel : ViewModel() {
         val mail = email.trim().lowercase()
         val id = kuetId.trim()
         val problem = when {
-            name.isBlank() -> "Enter your name."
+            name.isBlank() || name.trim().length > 100 -> "Enter your name (up to 100 characters)."
             password.length < 6 -> "Use a password of at least 6 characters."
             else -> verifier.validate(role, mail, id)
         }
@@ -122,8 +123,16 @@ class SessionViewModel : ViewModel() {
         run {
             val result = auth.createUserWithEmailAndPassword(mail, password).await()
             val user = result.user ?: return@run
-            // The profile document must exist before the screen can be chosen.
-            Repository.createProfile(user.uid, name.trim(), mail, role, id)
+            // The profile document must exist before the screen can be chosen. If the
+            // server refuses it, the login is removed again, so the email can be used for
+            // a fresh try instead of leaving an account stuck on the loading screen.
+            try {
+                Repository.createProfile(user.uid, name.trim(), mail, role, id)
+            } catch (e: Exception) {
+                runCatching { user.delete().await() }
+                auth.signOut()
+                throw e
+            }
             if (verifier.needsEmailVerification(role, mail)) {
                 user.sendEmailVerification().await()
             }
@@ -141,6 +150,9 @@ class SessionViewModel : ViewModel() {
             val user = auth.currentUser ?: return@run
             user.reload().await()
             val verified = auth.currentUser?.isEmailVerified ?: false
+            // The rules read "email verified" from the sign-in token, and the old token
+            // still says no for up to an hour, so fetch a fresh one first.
+            if (verified) auth.currentUser?.getIdToken(true)?.await()
             _state.update {
                 it.copy(
                     emailVerified = verified,
