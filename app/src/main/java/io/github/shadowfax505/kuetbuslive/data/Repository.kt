@@ -24,6 +24,8 @@ import io.github.shadowfax505.kuetbuslive.model.Wave
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.retryWhen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.tasks.await
 
 // One place for every Firestore read and write. Collections and fields follow
@@ -33,16 +35,22 @@ object Repository {
     private val db: FirebaseFirestore get() = FirebaseFirestore.getInstance()
 
     // A live query as a Flow. A listener error (for example "permission denied" right
-    // after signing out) ends in an empty list instead of crashing the screen.
+    // after signing out, or while a fresh sign-in token is on its way) shows an empty
+    // list instead of crashing the screen. Firestore closes a listener that failed, so
+    // it is opened again after 5 s, then a little longer each time, up to a minute.
     private fun <T> Query.live(map: (DocumentSnapshot) -> T?): Flow<List<T>> = callbackFlow {
         val registration = addSnapshotListener { snapshot, error ->
             if (error != null) {
                 trySend(emptyList())
+                close(error)
                 return@addSnapshotListener
             }
             trySend(snapshot?.documents?.mapNotNull(map) ?: emptyList())
         }
         awaitClose { registration.remove() }
+    }.retryWhen { _, attempt ->
+        delay((5_000L shl attempt.coerceAtMost(4).toInt()).coerceAtMost(60_000L))
+        true
     }
 
     // ---------- Users ----------
