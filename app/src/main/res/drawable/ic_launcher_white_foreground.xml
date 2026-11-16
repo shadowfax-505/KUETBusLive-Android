@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Light version: a dark KUET bus on a white tile, inside the adaptive icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Wheels -->
+    <path android:fillColor="#3A3A3A" android:pathData="M38,70h7v8a2,2 0,0 1,-2 2h-3a2,2 0,0 1,-2 -2z" />
+    <path android:fillColor="#3A3A3A" android:pathData="M63,70h7v8a2,2 0,0 1,-2 2h-3a2,2 0,0 1,-2 -2z" />
+    <!-- Mirrors -->
+    <path android:fillColor="#2A2A2A" android:pathData="M32,44h3v8h-3z" />
+    <path android:fillColor="#2A2A2A" android:pathData="M73,44h3v8h-3z" />
+    <!-- Body -->
+    <path android:fillColor="#141414" android:pathData="M42,34h24a8,8 0,0 1,8 8v26a5,5 0,0 1,-5 5h-30a5,5 0,0 1,-5 -5v-26a8,8 0,0 1,8 -8z" />
+    <!-- Sign -->
+    <path android:fillColor="#FFFFFF" android:pathData="M44.5,35.8h19a2,2 0,0 1,2 2v3.4a2,2 0,0 1,-2 2h-19a2,2 0,0 1,-2 -2v-3.4a2,2 0,0 1,2 -2z" />
+    <!-- KUET lettering on the sign -->
+    <path android:fillColor="#141414" android:pathData="M45.91 41.55V37.48H46.75V38.59L46.73 39.52Q46.87 39.3 47.02 39.1Q47.17 38.89 47.37 38.65L48.37 37.48H49.39L47.86 39.24L49.43 41.55H48.44L47.29 39.79L46.75 40.39V41.55Z M52.17 41.61Q51.66 41.61 51.28 41.42Q50.91 41.24 50.7 40.9Q50.49 40.57 50.49 40.12V37.48H51.32V40.05Q51.32 40.41 51.55 40.64Q51.78 40.87 52.17 40.87Q52.55 40.87 52.78 40.64Q53.02 40.41 53.02 40.05V37.48H53.85V40.12Q53.85 40.57 53.64 40.9Q53.43 41.24 53.05 41.42Q52.67 41.61 52.17 41.61Z M55.14 41.55V37.48H57.86V38.17H55.97V39.15H57.72V39.83H55.97V40.86H57.87V41.55Z M58.93 38.17V37.48H62.25V38.17H61.01V41.55H60.17V38.17Z" />
+    <!-- Windscreen -->
+    <path android:fillColor="#FFFFFF" android:pathData="M41,45h26a2,2 0,0 1,2 2v9a2,2 0,0 1,-2 2h-26a2,2 0,0 1,-2 -2v-9a2,2 0,0 1,2 -2z" />
+    <path android:fillColor="#1A000000" android:pathData="M43,46h5l-4,11h-2z" />
+    <!-- Stripe and lights -->
+    <path android:fillColor="#3A3A3A" android:pathData="M34,60h40v3h-40z" />
+    <path android:fillColor="#3A3A3A" android:pathData="M42,67.5m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path android:fillColor="#3A3A3A" android:pathData="M66,67.5m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path android:fillColor="#4A4A4A" android:pathData="M49,66h10v3h-10z" />
+    <!-- Pin -->
+    <path android:fillColor="#141414" android:pathData="M72,22c-4.4,0 -8,3.5 -8,7.9c0,5.6 8,13.1 8,13.1s8,-7.5 8,-13.1c0,-4.4 -3.6,-7.9 -8,-7.9z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M72,30m-2.8,0a2.8,2.8 0,1 1,5.6 0a2.8,2.8 0,1 1,-5.6 0" />
+</vector>
