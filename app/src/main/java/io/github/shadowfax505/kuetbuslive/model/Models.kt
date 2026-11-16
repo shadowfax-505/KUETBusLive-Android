@@ -199,15 +199,30 @@ data class Bus(
 
     companion object {
         const val CROWDED_FOR_MILLIS = 10 * 60 * 1000L
+        // No position for half an hour: the driver's phone died or the app was closed
+        // without ending the trip. Such a bus is left off the map (same limit on iOS).
+        const val ABANDONED_AFTER_MILLIS = 30 * 60 * 1000L
+
+        // "12 s ago", "5 min ago", "2 h ago", "1 d ago", as on iOS.
+        fun ageText(seconds: Long): String {
+            val s = seconds.coerceAtLeast(0)
+            return when {
+                s < 60 -> "$s s ago"
+                s < 3_600 -> "${s / 60} min ago"
+                s < 86_400 -> "${s / 3_600} h ago"
+                else -> "${s / 86_400} d ago"
+            }
+        }
     }
 
     // No position for a minute usually means the driver lost signal.
     fun isStale(nowMillis: Long = System.currentTimeMillis()): Boolean = nowMillis - updatedAtMillis > 60_000
 
-    fun lastUpdateText(nowMillis: Long = System.currentTimeMillis()): String {
-        val seconds = ((nowMillis - updatedAtMillis) / 1000).coerceAtLeast(0)
-        return if (seconds < 60) "$seconds s ago" else "${seconds / 60} min ago"
-    }
+    fun isAbandoned(nowMillis: Long = System.currentTimeMillis()): Boolean =
+        nowMillis - updatedAtMillis > ABANDONED_AFTER_MILLIS
+
+    fun lastUpdateText(nowMillis: Long = System.currentTimeMillis()): String =
+        ageText((nowMillis - updatedAtMillis) / 1000)
 }
 
 data class BusCover(

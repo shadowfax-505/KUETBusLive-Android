@@ -116,7 +116,9 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             Repository.buses(onlyStudentBuses = user.role == UserRole.STUDENT).collect { all ->
                 val role = this@RiderViewModel.user?.role ?: UserRole.STUDENT
-                val visible = all.filter { it.audience.canBoard(role) }
+                // A bus silent for half an hour was left behind by a phone that died mid-trip.
+                val now = System.currentTimeMillis()
+                val visible = all.filter { it.audience.canBoard(role) && !it.isAbandoned(now) }
                 _state.update { s ->
                     s.copy(
                         buses = visible,
