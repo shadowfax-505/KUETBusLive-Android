@@ -1,6 +1,5 @@
 package io.github.shadowfax505.kuetbuslive.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.animateColorAsState
@@ -75,7 +74,7 @@ fun Page(
             Column(Modifier.fillMaxWidth().background(barColor).statusBarsPadding()) {
                 Box(Modifier.fillMaxWidth().height(44.dp)) {
                     if (onBack != null) BackControl(onBack, Modifier.align(Alignment.CenterStart))
-                    AnimatedVisibility(collapsed, Modifier.align(Alignment.Center).padding(horizontal = 96.dp), enter = fadeIn(), exit = fadeOut()) {
+                    androidx.compose.animation.AnimatedVisibility(collapsed, Modifier.align(Alignment.Center).padding(horizontal = 96.dp), enter = fadeIn(), exit = fadeOut()) {
                         Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                     Row(Modifier.align(Alignment.CenterEnd).padding(end = 6.dp), verticalAlignment = Alignment.CenterVertically, content = actions)
