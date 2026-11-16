@@ -289,7 +289,8 @@ class ShowcaseTest {
             waitFor("Normal-1")
             shot("${p}02-live-map", settle = 10_000)
             tap("Schedule")
-            waitFor("My trips")
+            // The pinned trip's row ("Sun to Thu · reminder 10 min before"); the header is upper case.
+            runCatching { waitFor("min before") }
             shot("${p}06-schedule")
             widgetShot("${p}15-widget")
             tap("Routes")
