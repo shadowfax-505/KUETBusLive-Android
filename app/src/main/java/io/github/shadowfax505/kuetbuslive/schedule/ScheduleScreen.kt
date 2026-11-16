@@ -207,6 +207,10 @@ private fun TripRow(trip: BusSchedule, now: Long, pinned: Boolean = false, onCli
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(trip.tripName, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                if (pinned) {
+                    Icon(Icons.Rounded.PushPin, "In My trips", tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp).size(14.dp))
+                }
                 Spacer(Modifier.width(8.dp))
                 AudienceBadge(trip.audience)
             }
@@ -219,7 +223,6 @@ private fun TripRow(trip: BusSchedule, now: Long, pinned: Boolean = false, onCli
                 Text(trip.remarks, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        if (pinned) Icon(Icons.Rounded.PushPin, "In My trips", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(end = 6.dp).size(18.dp))
         if (upcoming) Pill("Today", Brand.Seats)
         if (onClick != null) Chevron()
     }

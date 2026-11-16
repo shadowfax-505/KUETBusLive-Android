@@ -581,6 +581,9 @@ fun Pill(text: String, color: Color, modifier: Modifier = Modifier, icon: ImageV
             style = MaterialTheme.typography.labelMedium,
             color = if (filled) Color.White else color,
             fontWeight = FontWeight.SemiBold,
+            // A pill keeps its words on one line instead of breaking "Student bus" mid-word.
+            maxLines = 1,
+            softWrap = false,
         )
     }
 }
