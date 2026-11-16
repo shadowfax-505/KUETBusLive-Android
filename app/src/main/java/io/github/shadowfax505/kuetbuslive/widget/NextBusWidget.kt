@@ -86,6 +86,13 @@ class NextBusWidget : AppWidgetProvider() {
     }
 
     companion object {
+        // The widget as it looks now, for the README screenshots.
+        fun preview(context: Context): RemoteViews {
+            val widget = NextBusWidget()
+            val now = System.currentTimeMillis()
+            return widget.views(context, widget.nextTrip(context, now), now)
+        }
+
         private const val ACTION_TICK = "io.github.shadowfax505.kuetbuslive.widget.TICK"
 
         private fun alarmManager(context: Context) = context.getSystemService(AlarmManager::class.java)
