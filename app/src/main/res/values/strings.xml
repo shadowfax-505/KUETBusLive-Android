@@ -10,8 +10,8 @@
     <string name="arrival_channel_description">Tells you when your bus is a few minutes away.</string>
     <string name="widget_label">Next bus</string>
     <string name="widget_description">The next KUET bus you can take, and when it leaves.</string>
-    <string name="widget_from_campus">Leaves KUET for %1$s</string>
-    <string name="widget_from_spot">Leaves %1$s for KUET</string>
+    <string name="widget_from_campus">From KUET to %1$s</string>
+    <string name="widget_from_spot">From %1$s to KUET</string>
     <string name="widget_no_more_buses">No more buses today</string>
     <string name="widget_sign_in">Open the app to sign in</string>
     <string name="departure_channel_name">Bus left campus</string>

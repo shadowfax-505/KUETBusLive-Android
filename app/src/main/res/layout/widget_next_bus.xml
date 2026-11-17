@@ -68,7 +68,7 @@
         android:ellipsize="end"
         android:fontFamily="sans-serif-medium"
         android:letterSpacing="0.08"
-        android:maxLines="1"
+        android:maxLines="2"
         android:textAllCaps="true"
         android:textColor="@color/widget_secondary"
         android:textSize="10sp" />
