@@ -51,9 +51,13 @@ These are taken automatically by the [screenshot tour](#continuous-integration) 
 | :-: | :-: | :-: | :-: |
 | <img src="docs/screenshots/01-sign-in.jpg" width="200"> | <img src="docs/screenshots/02-live-map.jpg" width="200"> | <img src="docs/screenshots/03-bus-selected.jpg" width="200"> | <img src="docs/screenshots/04-best-place-to-get-off.jpg" width="200"> |
 
-| Timetable | Routes | Profile | Driver |
+| Timetable and My trips | Routes | Profile | Driver |
 | :-: | :-: | :-: | :-: |
 | <img src="docs/screenshots/06-schedule.jpg" width="200"> | <img src="docs/screenshots/07-routes.jpg" width="200"> | <img src="docs/screenshots/09-profile.jpg" width="200"> | <img src="docs/screenshots/10-driver-home.jpg" width="200"> |
+
+| Home screen widget | Widget, dark |
+| :-: | :-: |
+| <img src="docs/screenshots/15-widget.png" width="200"> | <img src="docs/screenshots/dark-15-widget.png" width="200"> |
 
 ### Dark mode
 
@@ -74,13 +78,17 @@ Every picture, in both modes, is in [`docs/screenshots`](docs/screenshots).
 | Feature | In one line |
 | --- | --- |
 | 🗺️ Live map | Every running bus you may ride, drawn as a bus seen from above that glides between GPS fixes and turns with the road. |
-| ⏱️ ETA to your stop | Minutes and distance to the stop you picked, over real roads, refreshed as the bus moves. |
+| ⏱️ ETA to your stop | Minutes and distance to the stop you picked, over real roads, refreshed as the bus moves. If the routing server is down, an estimate along the route instead. |
 | 📍 Where to? | Search any stop or place, and the app tells you the best stop to get off at and how long the walk is. |
 | ⚖️ Compare | Every bus that can take you there today, fastest first. |
 | ✋ I'm waiting here | Tell the driver you are waiting. They see you on the road ahead with a tone and a buzz. |
 | 🛑 Ask to stop | Ask the driver to stop at the place that is best for you. |
 | 🔔 Arrival alert | A notification when your bus is about 5 minutes from your stop. |
 | 📅 Official timetable | All KUET trips (Sunday to Thursday and Saturday), with your next bus at the top. |
+| 📌 My trips | Pin the buses you usually take with the days, get a reminder before each, or add them to the calendar. Pins follow you to the iOS app. |
+| 📱 Home screen widget | The next bus you can take, in the same black-and-white look as the iOS widget, with the KUET bus mark. |
+| 📨 Departure pushes | "Normal-2 just left campus" for the route with your stop (teachers' buses only reach teachers). |
+| 🗑️ Delete account | Removes your profile, pins, places, complaints and login, from Profile. |
 | 🎓 Bus allocation | Students see only *Normal* (student) buses. Teachers can ride any bus. |
 | 👥 Crowd reports | Riders on the bus can say it is full, and everyone sees it. |
 | 🪪 KUET ID check | Roll number or employee ID, KUET email, an email link, and admin approval for teachers and drivers. |
