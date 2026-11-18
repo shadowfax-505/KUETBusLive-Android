@@ -66,6 +66,13 @@ fun RiderHome(session: SessionViewModel, user: AppUser) {
     val myTrips by campus.myTrips.collectAsStateWithLifecycle()
     LaunchedEffect(myTrips, schedules) { TripReminders.update(context, myTrips, schedules) }
     // Pushes for the route that has my stop ("Normal-2 just left campus"), as on iOS.
+    LaunchedEffect(routes, user.favoriteStopName) {
+        val stop = user.favoriteStopName
+        val route = routes.firstOrNull { r -> r.stops.any { it.name == stop } }
+        WidgetStore.saveRoute(context, stop?.let {
+            WidgetStore.RiderRoute(it, route?.name, route?.let { r -> WidgetStore.stopFractions(r, it) }.orEmpty())
+        })
+    }
     LaunchedEffect(routes, user.favoriteStopName, user.role) {
         val stop = user.favoriteStopName ?: return@LaunchedEffect
         if (routes.isEmpty()) return@LaunchedEffect
