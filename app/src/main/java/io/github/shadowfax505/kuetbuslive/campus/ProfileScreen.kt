@@ -1,5 +1,6 @@
 package io.github.shadowfax505.kuetbuslive.campus
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,7 +43,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.shadowfax505.kuetbuslive.data.AppIconChoice
 import io.github.shadowfax505.kuetbuslive.data.AppIcons
+import io.github.shadowfax505.kuetbuslive.data.BusStyle
+import io.github.shadowfax505.kuetbuslive.data.BusStyles
 import io.github.shadowfax505.kuetbuslive.data.Prefs
+import io.github.shadowfax505.kuetbuslive.rider.BusPreview
 import io.github.shadowfax505.kuetbuslive.model.AppUser
 import io.github.shadowfax505.kuetbuslive.ui.components.ActionRow
 import io.github.shadowfax505.kuetbuslive.ui.components.AppIcon
@@ -70,6 +74,7 @@ fun ProfileScreen(
     val message by campus.message.collectAsStateWithLifecycle()
     var alerts by remember { mutableStateOf(prefs.arrivalAlerts) }
     var appIcon by remember { mutableStateOf(AppIcons.current(context)) }
+    val busStyle = BusStyles.current(context)
     var editingName by remember { mutableStateOf(false) }
     var confirmSignOut by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
@@ -118,6 +123,11 @@ fun ProfileScreen(
         item {
             Section(header = "App icon", footer = "Your home screen can take a few seconds to show the new icon.") {
                 AppIconPicker(appIcon) { appIcon = it; AppIcons.set(context, it) }
+            }
+        }
+        item {
+            Section(header = "Bus on the trip bar", footer = "How the bus looks as it drives towards your stop.") {
+                BusStylePicker(busStyle) { BusStyles.set(context, it) }
             }
         }
         item {
@@ -196,6 +206,45 @@ fun ProfileScreen(
             confirmButton = { TextButton(onClick = { confirmSignOut = false; onSignOut() }) { Text("Sign Out", color = MaterialTheme.colorScheme.error) } },
             dismissButton = { TextButton(onClick = { confirmSignOut = false }) { Text("Cancel") } },
         )
+    }
+}
+
+@Composable
+private fun BusStylePicker(selected: BusStyle, onPick: (BusStyle) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+    ) {
+        BusStyle.entries.forEach { style ->
+            val isSelected = style == selected
+            Column(
+                Modifier
+                    .clip(RoundedCornerShape(14.dp))
+                    .clickable(onClickLabel = "Show the bus ${style.title.lowercase()}") { onPick(style) }
+                    .padding(6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Box(
+                    Modifier
+                        .border(
+                            2.dp,
+                            if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                            RoundedCornerShape(14.dp),
+                        )
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                ) {
+                    BusPreview(style)
+                }
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    style.title,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 

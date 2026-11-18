@@ -22,6 +22,10 @@ class Prefs(context: Context) {
         get() = prefs.getStringSet("readAnnouncements", emptySet()) ?: emptySet()
         set(value) = prefs.edit().putStringSet("readAnnouncements", value).apply()
 
+    var busStyle: BusStyle
+        get() = BusStyle.from(prefs.getString("busStyle", null))
+        set(value) = prefs.edit().putString("busStyle", value.raw).apply()
+
     var wavingAtBusId: String?
         get() = prefs.getString("wavingAtBusId", null)?.takeIf { prefs.getLong("wavingUntil", 0) > System.currentTimeMillis() }
         set(value) = prefs.edit().putString("wavingAtBusId", value).apply()
