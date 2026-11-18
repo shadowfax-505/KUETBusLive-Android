@@ -5,4 +5,5 @@
     <color name="widget_background_bottom">#1C1C1E</color>
     <color name="widget_primary">#FFFFFF</color>
     <color name="widget_secondary">#99FFFFFF</color>
+    <color name="widget_hairline">#1FFFFFFF</color>
 </resources>
