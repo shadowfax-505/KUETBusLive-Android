@@ -4,7 +4,7 @@
      can't change its font from code. -->
 <resources>
     <!-- Departure board: condensed capitals like a station board. -->
-    <style name="Widget.Board.Label">
+    <style name="Widget.Board.Label" parent="">
         <item name="android:fontFamily">@font/barlow_condensed_medium</item>
         <item name="android:letterSpacing">0.16</item>
         <item name="android:textAllCaps">true</item>
@@ -13,7 +13,7 @@
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">end</item>
     </style>
-    <style name="Widget.Board.Title">
+    <style name="Widget.Board.Title" parent="">
         <item name="android:fontFamily">@font/barlow_condensed_bold</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:textColor">@color/widget_primary</item>
@@ -21,7 +21,7 @@
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">end</item>
     </style>
-    <style name="Widget.Board.Number">
+    <style name="Widget.Board.Number" parent="">
         <item name="android:fontFamily">@font/barlow_condensed_bold</item>
         <item name="android:textColor">@color/widget_primary</item>
         <item name="android:textSize">44sp</item>
@@ -34,7 +34,7 @@
     <style name="Widget.Board.Number.Time">
         <item name="android:textSize">32sp</item>
     </style>
-    <style name="Widget.Board.Small">
+    <style name="Widget.Board.Small" parent="">
         <item name="android:fontFamily">@font/barlow_condensed_medium</item>
         <item name="android:textColor">@color/widget_secondary</item>
         <item name="android:textSize">13sp</item>
@@ -42,7 +42,7 @@
         <item name="android:ellipsize">end</item>
     </style>
     <!-- Space Grotesk: a modern geometric sans. -->
-    <style name="Widget.Grotesk.Label">
+    <style name="Widget.Grotesk.Label" parent="">
         <item name="android:fontFamily">@font/space_grotesk_medium</item>
         <item name="android:letterSpacing">0.1</item>
         <item name="android:textAllCaps">true</item>
@@ -51,7 +51,7 @@
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">end</item>
     </style>
-    <style name="Widget.Grotesk.Title">
+    <style name="Widget.Grotesk.Title" parent="">
         <item name="android:fontFamily">@font/space_grotesk_bold</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:textColor">@color/widget_primary</item>
@@ -59,7 +59,7 @@
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">end</item>
     </style>
-    <style name="Widget.Grotesk.Number">
+    <style name="Widget.Grotesk.Number" parent="">
         <item name="android:fontFamily">@font/space_grotesk_bold</item>
         <item name="android:textColor">@color/widget_primary</item>
         <item name="android:textSize">36sp</item>
@@ -72,7 +72,7 @@
     <style name="Widget.Grotesk.Number.Time">
         <item name="android:textSize">26sp</item>
     </style>
-    <style name="Widget.Grotesk.Small">
+    <style name="Widget.Grotesk.Small" parent="">
         <item name="android:fontFamily">@font/space_grotesk_medium</item>
         <item name="android:textColor">@color/widget_secondary</item>
         <item name="android:textSize">11sp</item>
@@ -80,7 +80,7 @@
         <item name="android:ellipsize">end</item>
     </style>
     <!-- Serif and mono: a serif name with monospaced numbers, like a printed timetable. -->
-    <style name="Widget.Timetable.Label">
+    <style name="Widget.Timetable.Label" parent="">
         <item name="android:fontFamily">@font/jetbrains_mono_medium</item>
         <item name="android:letterSpacing">0.02</item>
         <item name="android:textAllCaps">true</item>
@@ -89,7 +89,7 @@
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">end</item>
     </style>
-    <style name="Widget.Timetable.Title">
+    <style name="Widget.Timetable.Title" parent="">
         <item name="android:fontFamily">@font/fraunces_semibold</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:textColor">@color/widget_primary</item>
@@ -97,7 +97,7 @@
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">end</item>
     </style>
-    <style name="Widget.Timetable.Number">
+    <style name="Widget.Timetable.Number" parent="">
         <item name="android:fontFamily">@font/jetbrains_mono_bold</item>
         <item name="android:textColor">@color/widget_primary</item>
         <item name="android:textSize">32sp</item>
@@ -110,7 +110,7 @@
     <style name="Widget.Timetable.Number.Time">
         <item name="android:textSize">22sp</item>
     </style>
-    <style name="Widget.Timetable.Small">
+    <style name="Widget.Timetable.Small" parent="">
         <item name="android:fontFamily">@font/jetbrains_mono_medium</item>
         <item name="android:textColor">@color/widget_secondary</item>
         <item name="android:textSize">10sp</item>
