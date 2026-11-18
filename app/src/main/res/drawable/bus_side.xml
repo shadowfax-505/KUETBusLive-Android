@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A glossy white KUET bus seen from the side, nose to the right, for the trip progress bar. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="120dp"
+    android:height="56dp"
+    android:viewportWidth="120"
+    android:viewportHeight="56">
+
+    <!-- Ground shadow: a round shadow squashed flat. -->
+    <group android:pivotX="60" android:pivotY="50" android:scaleY="0.0926">
+        <path android:pathData="M6,50a54,54 0,1 0,108 0a54,54 0,1 0,-108 0z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="radial" android:centerX="60" android:centerY="50" android:gradientRadius="54">
+                    <item android:offset="0" android:color="#59000000" />
+                    <item android:offset="1" android:color="#00000000" />
+                </gradient>
+            </aapt:attr>
+        </path>
+    </group>
+
+    <!-- Body: flat back, rounded roof, slightly raked nose. -->
+    <path
+        android:pathData="M8,10Q8,6 12,6H100Q108,6 110,12L114,34Q115,42 108,42H12Q8,42 8,38Z"
+        android:strokeWidth="0.8"
+        android:strokeColor="#47000000">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="6" android:endX="0" android:endY="42">
+                <item android:offset="0" android:color="#FFFFFFFF" />
+                <item android:offset="0.55" android:color="#FFF2F2F2" />
+                <item android:offset="1" android:color="#FFC9C9C9" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M14,8H99Q104,8 105.5,11H14Z" android:fillColor="#E6FFFFFF" />
+
+    <!-- Windows, door and windscreen in dark tinted glass. -->
+    <path android:pathData="M12,13H96V26H12Z M84,13H94V40H84Z M99,13H105Q107,13 107.6,15.5L110,28H99Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="13" android:endX="0" android:endY="28">
+                <item android:offset="0" android:color="#FF4A4A50" />
+                <item android:offset="1" android:color="#FF121214" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M30,13h2.2v13h-2.2z M50,13h2.2v13h-2.2z M70,13h2.2v13h-2.2z" android:fillColor="#FFF4F4F4" />
+    <path android:pathData="M89,14V39" android:strokeColor="#FF666666" android:strokeWidth="0.6" />
+    <path android:pathData="M14,14.5H28L24,19H14Z" android:fillColor="#2EFFFFFF" />
+    <path android:pathData="M100,14.5H104L101.5,20H100Z" android:fillColor="#40FFFFFF" />
+
+    <!-- Black skirt and the belt line along the side. -->
+    <path android:pathData="M8,36H114.6Q114.8,42 108,42H12Q8,42 8,38Z" android:fillColor="#FF1A1A1A" />
+    <path android:pathData="M8,30h76v1.6h-76z" android:fillColor="#D91A1A1A" />
+
+    <!-- Tail light and headlight. -->
+    <path android:pathData="M9,29h1q0.8,0 0.8,0.8v3.4q0,0.8 -0.8,0.8h-1q-0.8,0 -0.8,-0.8v-3.4q0,-0.8 0.8,-0.8z" android:fillColor="#FFD63031" />
+    <path android:pathData="M110.6,30L113.6,30L114,34L111,34Z" android:fillColor="#FFFFF7DC" android:strokeColor="#4D000000" android:strokeWidth="0.5" />
+
+    <!-- Wheels. -->
+    <path android:pathData="M20,42a7,7 0,1 0,14 0a7,7 0,1 0,-14 0z M87,42a7,7 0,1 0,14 0a7,7 0,1 0,-14 0z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="35" android:endX="0" android:endY="49">
+                <item android:offset="0" android:color="#FF3A3A3A" />
+                <item android:offset="1" android:color="#FF0E0E0E" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M23.8,42a3.2,3.2 0,1 0,6.4 0a3.2,3.2 0,1 0,-6.4 0z M90.8,42a3.2,3.2 0,1 0,6.4 0a3.2,3.2 0,1 0,-6.4 0z" android:fillColor="#FFBDBDBD" />
+    <path android:pathData="M25.8,42a1.2,1.2 0,1 0,2.4 0a1.2,1.2 0,1 0,-2.4 0z M92.8,42a1.2,1.2 0,1 0,2.4 0a1.2,1.2 0,1 0,-2.4 0z" android:fillColor="#FF555555" />
+</vector>
