@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -18,8 +19,11 @@ import androidx.compose.ui.platform.LocalContext
 import io.github.shadowfax505.kuetbuslive.widget.WidgetStore
 import io.github.shadowfax505.kuetbuslive.push.PushTopics
 import io.github.shadowfax505.kuetbuslive.reminders.TripReminders
-import androidx.compose.ui.Modifier
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -31,6 +35,7 @@ import io.github.shadowfax505.kuetbuslive.auth.SignedOutFlow
 import io.github.shadowfax505.kuetbuslive.auth.VerifyEmailScreen
 import io.github.shadowfax505.kuetbuslive.auth.WaitingForApprovalScreen
 import io.github.shadowfax505.kuetbuslive.ui.HomeRouter
+import io.github.shadowfax505.kuetbuslive.ui.components.IntroAnimation
 import io.github.shadowfax505.kuetbuslive.ui.components.LoadingScreen
 import io.github.shadowfax505.kuetbuslive.ui.theme.KuetBusTheme
 
@@ -41,8 +46,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             KuetBusTheme {
-                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    if (KuetBusApp.firebaseReady) AppRoot() else SetupNeededScreen()
+                // The intro plays once per launch, over the first screen as it loads.
+                var showIntro by rememberSaveable { mutableStateOf(savedInstanceState == null) }
+                Box(Modifier.fillMaxSize()) {
+                    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                        if (KuetBusApp.firebaseReady) AppRoot() else SetupNeededScreen()
+                    }
+                    if (showIntro) IntroAnimation { showIntro = false }
                 }
             }
         }

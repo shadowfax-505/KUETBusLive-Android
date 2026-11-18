@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Intro animation: the KUET lettering on the bus sign. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- KUET lettering on the sign -->
+    <path android:fillColor="#FFFFFF" android:pathData="M45.91 41.55V37.48H46.75V38.59L46.73 39.52Q46.87 39.3 47.02 39.1Q47.17 38.89 47.37 38.65L48.37 37.48H49.39L47.86 39.24L49.43 41.55H48.44L47.29 39.79L46.75 40.39V41.55Z M52.17 41.61Q51.66 41.61 51.28 41.42Q50.91 41.24 50.7 40.9Q50.49 40.57 50.49 40.12V37.48H51.32V40.05Q51.32 40.41 51.55 40.64Q51.78 40.87 52.17 40.87Q52.55 40.87 52.78 40.64Q53.02 40.41 53.02 40.05V37.48H53.85V40.12Q53.85 40.57 53.64 40.9Q53.43 41.24 53.05 41.42Q52.67 41.61 52.17 41.61Z M55.14 41.55V37.48H57.86V38.17H55.97V39.15H57.72V39.83H55.97V40.86H57.87V41.55Z M58.93 38.17V37.48H62.25V38.17H61.01V41.55H60.17V38.17Z" />
+</vector>
