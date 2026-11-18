@@ -94,6 +94,8 @@ Every picture, in both modes, is in [`docs/screenshots`](docs/screenshots).
 | 🪪 KUET ID check | Roll number or employee ID, KUET email, an email link, and admin approval for teachers and drivers. |
 | 🛠️ Transport office | Edit the timetable, approve accounts, assign drivers, arrange covers, answer complaints and post news. |
 | 🌗 Light and dark | Every screen, including the map, follows the phone's theme. |
+| 🎬 Brand intro | The app opens with a short animation of the KUET bus and pin. |
+| 🎨 App icon and bus style | Profile lets you pick the app icon (Black, White, Colour, Pin) and whether the bus on the trip bar is seen from above or from the side. |
 
 ---
 
@@ -243,13 +245,17 @@ app/src/main/java/io/github/shadowfax505/kuetbuslive/
   admin/      approvals, drivers & buses, complaints inbox, special days
   campus/     routes, news, complaints, profile, stop picker
   schedule/   timetable and its editor
-  ui/         theme, shared components, the home screen for each role
+  ui/         theme, shared components, the intro, the home screen for each role
+  widget/     the Next bus home screen widget (RemoteViews)
+  push/       route topics and the "just left campus" push
+  reminders/  weekly My trips reminders, set again after a restart
 ```
 
 | Library | Used for |
 | --- | --- |
 | Jetpack Compose, Material 3 | every screen |
 | Firebase Auth, Cloud Firestore | accounts and live data |
+| Firebase Cloud Messaging | "just left campus" pushes on route topics |
 | MapLibre Native + OpenFreeMap | vector map, light and dark styles, no API key |
 | OSRM | road routes and driving times |
 | Android Geocoder | searching places for Where to? |
@@ -263,20 +269,22 @@ Both apps follow [`docs/data-model.md`](https://github.com/shadowfax-505/KUETBus
 
 | Collection | Used for |
 | --- | --- |
-| `users` | profiles, roles, approval, favourite stop |
+| `users` (+ `places`, `myTrips`) | profiles, roles, approval, favourite stop, saved places, pinned trips |
 | `schedules`, `routes`, `specialDays` | timetable, stops, exam days and holidays |
-| `buses` (+ `waves`) | live trips and riders waiting |
+| `buses` (+ `waves`, `dropoffs`) | live trips, riders waiting and "please stop here" requests |
 | `fleet`, `driverAbsences`, `trips` | who drives which bus, covers and per-trip drivers |
-| `segmentStats`, `spotStats`, `driverStats`, `dropoffs` | learned travel times |
+| `segmentStats`, `spotStats`, `driverStats` | learned travel times |
 | `complaints`, `announcements` | feedback and news |
 
 ---
 
 ## Security
 
-- The **rules** decide who may do what. A driver can only put the bus they drive today on the map, and only change its position. Students can only read student buses, so the app asks for exactly those.
-- **Students and teachers must confirm their KUET email** before they get in. Teachers and drivers also wait for the transport office.
-- **Demo accounts** (`@test.com`) work only in debug builds, the same as on iOS. Release builds accept KUET emails only.
+- The **rules** decide who may do what. A driver can only put the bus they drive today (or that trip) on the map, and only change its position. Students can only read student buses, so the app asks for exactly those.
+- **Sign-up is checked on the server too.** A student needs the KUET student email that contains their roll number, and a teacher needs a KUET staff email, so the app's checks can't be skipped by calling Firebase directly.
+- **Students and teachers must confirm their KUET email** before they see any bus: the rules read `email_verified` from the sign-in token. When the link is opened, the app fetches a fresh token so it works straight away. Teachers and drivers also wait for the transport office, and an account it turns off sees no buses.
+- **Demo accounts** (`@test.com`) work only in debug builds. Once the stricter rules are deployed, they only work against the local Firebase emulators.
+- **Signing out** clears the widget, the My trips reminders and the push topics on that phone. **Delete account** removes the profile, places, pinned trips, complaints, any open wave and the login.
 - `google-services.json` is **never committed**. CI writes it from a repository secret.
 
 ---
@@ -287,8 +295,8 @@ Two GitHub Actions workflows:
 
 | Workflow | When | What it does |
 | --- | --- | --- |
-| [Android CI](.github/workflows/android.yml) | every push | Runs the unit tests (KUET ID checks, timetable, maths, bus assignment, trip learning) and builds the APK. On `main` it publishes the APK to the [android-demo release](https://github.com/shadowfax-505/KUETBusLive-Android/releases/tag/android-demo). |
-| [Screenshots](.github/workflows/screenshots.yml) | push to `screenshots` | Starts the Firebase emulators with made-up accounts, buses and the real timetable, runs `ShowcaseTest` on an Android emulator through every role in light and dark mode, and saves the pictures. It never touches the real project. |
+| [Android CI](.github/workflows/android.yml) | every push | Runs the unit tests (KUET ID checks, timetable, maths, bus assignment, trip learning, My trips reminders, bus age and the ETA estimate) and builds the APK. On `main` it publishes the APK to the [android-demo release](https://github.com/shadowfax-505/KUETBusLive-Android/releases/tag/android-demo). |
+| [Screenshots](.github/workflows/screenshots.yml) | push to `screenshots`, or by hand from the Actions tab | Starts the Firebase emulators with made-up accounts, buses and the real timetable, runs `ShowcaseTest` on an Android emulator through every role in light and dark mode, and saves the pictures. It never touches the real project. |
 
 ---
 
@@ -298,6 +306,7 @@ Two GitHub Actions workflows:
 2. Add an Android app with the package name `io.github.shadowfax505.kuetbuslive`.
 3. Download `google-services.json` into `app/`. Git ignores it.
 4. Open the project in Android Studio and run it on a phone or emulator with Android 8.0 or newer.
+5. The rules and the push function live in the [iOS repository](https://github.com/shadowfax-505/KUETBusLive). Deploy them from there with `firebase deploy --only firestore:rules` and `firebase deploy --only functions` (the function needs the Blaze plan). See its [Security rules](https://github.com/shadowfax-505/KUETBusLive#security-rules) section before deploying: the stricter rules end `@test.com` demo accounts on the real project.
 
 Without `google-services.json` the app still builds, and opens on a short screen that says the file is missing.
 
