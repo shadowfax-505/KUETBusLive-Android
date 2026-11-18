@@ -49,7 +49,6 @@ import androidx.compose.material.icons.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.ZoomOutMap
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarHost
@@ -80,6 +79,7 @@ import io.github.shadowfax505.kuetbuslive.map.BusMapController
 import io.github.shadowfax505.kuetbuslive.map.FocusRequest
 import io.github.shadowfax505.kuetbuslive.model.AppUser
 import io.github.shadowfax505.kuetbuslive.model.Bus
+import io.github.shadowfax505.kuetbuslive.model.BusAudience
 import io.github.shadowfax505.kuetbuslive.model.CrowdLevel
 import io.github.shadowfax505.kuetbuslive.model.Geo
 import io.github.shadowfax505.kuetbuslive.model.Timetable
@@ -477,14 +477,8 @@ private fun TripCard(user: AppUser, bus: Bus, state: RiderState, vm: RiderViewMo
 
         if (progress != null && stop != null) {
             Spacer(Modifier.height(14.dp))
-            LinearProgressIndicator(
-                progress = { animatedProgress },
-                modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-                color = MaterialTheme.colorScheme.onSurface,
-                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                drawStopIndicator = {},
-            )
-            Row(Modifier.fillMaxWidth().padding(top = 6.dp)) {
+            BusProgressBar(animatedProgress, teacher = bus.audience == BusAudience.TEACHER)
+            Row(Modifier.fillMaxWidth().padding(top = 2.dp)) {
                 Text("KUET", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
                 nearest?.let { Text("Near ${it.name}", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold) }
                 Spacer(Modifier.weight(1f))
