@@ -6,6 +6,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
+import io.github.shadowfax505.kuetbuslive.auth.AccountDeletion
+import io.github.shadowfax505.kuetbuslive.auth.SessionViewModel
+import io.github.shadowfax505.kuetbuslive.driver.TripLocationService
+import io.github.shadowfax505.kuetbuslive.driver.TripTracker
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -61,6 +66,7 @@ fun ProfileScreen(
     onOpenComplaints: () -> Unit,
     onOpenNews: (() -> Unit)?,
     onSignOut: () -> Unit,
+    session: SessionViewModel,
     onBack: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
@@ -71,6 +77,8 @@ fun ProfileScreen(
     val busStyle = BusStyles.current(context)
     var editingName by remember { mutableStateOf(false) }
     var confirmSignOut by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf(false) }
+    val sessionState by session.state.collectAsStateWithLifecycle()
 
     Page("Profile", onBack = onBack, message = message, onMessageShown = campus::clearMessage) {
         item {
@@ -133,6 +141,52 @@ fun ProfileScreen(
                 ActionRow("Sign Out", destructive = true) { confirmSignOut = true }
             }
         }
+        item {
+            Section(footer = "Removes your account and everything it saved, for good.") {
+                ActionRow("Delete Account", destructive = true) { deleting = true }
+            }
+        }
+    }
+
+    if (deleting) {
+        var password by remember { mutableStateOf("") }
+        var problem by remember { mutableStateOf<String?>(null) }
+        val onTrip = TripTracker.state.value.trip != null
+        AlertDialog(
+            onDismissRequest = { if (!sessionState.busy) deleting = false },
+            title = { Text("Delete your account?") },
+            text = {
+                Column {
+                    Text(AccountDeletion.explanation(user.role, onTrip), style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(12.dp))
+                    AppTextField(password, { password = it }, "Password", isPassword = true)
+                    problem?.let {
+                        Spacer(Modifier.height(8.dp))
+                        Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = password.isNotEmpty() && !sessionState.busy,
+                    onClick = {
+                        problem = null
+                        session.deleteAccount(
+                            password,
+                            wavingAtBusId = prefs.wavingAtBusId,
+                            beforeDeleting = {
+                                // Stop sharing GPS first, so the bus isn't written again after it's removed.
+                                if (TripTracker.state.value.trip != null) TripLocationService.end(context)
+                            },
+                            clearPhone = { prefs.clear() },
+                        ) { result ->
+                            if (result == null) deleting = false else problem = result
+                        }
+                    },
+                ) { Text(if (sessionState.busy) "Deleting…" else "Delete", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(enabled = !sessionState.busy, onClick = { deleting = false }) { Text("Cancel") } },
+        )
     }
 
     if (editingName) {

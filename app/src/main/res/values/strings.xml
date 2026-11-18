@@ -8,4 +8,14 @@
     <string name="trip_channel_description">Shown while your bus position is being shared.</string>
     <string name="arrival_channel_name">Bus arriving</string>
     <string name="arrival_channel_description">Tells you when your bus is a few minutes away.</string>
+    <string name="widget_label">Next bus</string>
+    <string name="widget_description">The next KUET bus you can take, and when it leaves.</string>
+    <string name="widget_from_campus">From KUET to %1$s</string>
+    <string name="widget_from_spot">From %1$s to KUET</string>
+    <string name="widget_no_more_buses">No more buses today</string>
+    <string name="widget_sign_in">Open the app to sign in</string>
+    <string name="departure_channel_name">Bus left campus</string>
+    <string name="departure_channel_description">Tells you when a bus on your route leaves KUET.</string>
+    <string name="reminder_channel_name">My trips reminders</string>
+    <string name="reminder_channel_description">Reminds you before a bus you pinned in My trips leaves.</string>
 </resources>

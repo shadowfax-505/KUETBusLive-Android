@@ -17,6 +17,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import org.json.JSONObject
+import io.github.shadowfax505.kuetbuslive.widget.NextBusWidget
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -125,6 +126,18 @@ class ShowcaseTest {
         }
         await(batch.commit())
 
+        // The student pinned their usual morning bus ("My trips").
+        val usual = (0 until trips.length()).firstOrNull {
+            val t = trips.getJSONObject(it)
+            t.getString("tripName").startsWith("Normal") && t.getString("days") == "sunToThu"
+        }
+        if (usual != null) {
+            await(db.collection("users").document(uids.getValue("student")).collection("myTrips").document("trip-$usual").set(mapOf(
+                "leg" to "campus", "days" to listOf("sun", "mon", "tue", "wed", "thu"), "remindMinutes" to 10,
+                "createdAt" to Timestamp(Date()),
+            )))
+        }
+
         await(db.collection("fleet").document("normal-1").set(mapOf("name" to "Normal-1")))
         // Normal-2 runs every day, Saturdays included, so the driver always has trips to show.
         await(db.collection("fleet").document("normal-2").set(mapOf("name" to "Normal-2", "defaultDriverId" to uids.getValue("driver"))))
@@ -184,6 +197,28 @@ class ShowcaseTest {
         }
         val bitmap = instrumentation.uiAutomation.takeScreenshot() ?: return
         File(shots, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+    }
+
+    // The home screen widget, drawn at its 2 x 2 size from what the app saved for it.
+    private fun widgetShot(name: String) {
+        val context = instrumentation.targetContext
+        val size = (170 * context.resources.displayMetrics.density).toInt()
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        val latch = java.util.concurrent.CountDownLatch(1)
+        handler.post {
+            runCatching {
+                val parent = android.widget.FrameLayout(context)
+                val view = NextBusWidget.preview(context).apply(context, parent)
+                val spec = android.view.View.MeasureSpec.makeMeasureSpec(size, android.view.View.MeasureSpec.EXACTLY)
+                view.measure(spec, spec)
+                view.layout(0, 0, size, size)
+                val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+                view.draw(android.graphics.Canvas(bitmap))
+                File(shots, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            }.onFailure { Log.e("Showcase", "Widget shot failed", it) }
+            latch.countDown()
+        }
+        latch.await(10, TimeUnit.SECONDS)
     }
 
     private fun waitFor(text: String, timeout: Long = 20_000) {
@@ -254,7 +289,10 @@ class ShowcaseTest {
             waitFor("Normal-1")
             shot("${p}02-live-map", settle = 10_000)
             tap("Schedule")
+            // The pinned trip's row ("Sun to Thu · reminder 10 min before"); the header is upper case.
+            runCatching { waitFor("min before") }
             shot("${p}06-schedule")
+            widgetShot("${p}15-widget")
             tap("Routes")
             shot("${p}07-routes")
             tap("News")

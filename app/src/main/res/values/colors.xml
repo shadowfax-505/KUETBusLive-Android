@@ -4,4 +4,9 @@
     <color name="brand_white">#FFFFFF</color>
     <color name="splash_background">#000000</color>
     <color name="icon_background">#000000</color>
+    <!-- Home screen widget, light mode (night colours are in values-night). -->
+    <color name="widget_background_top">#FFFFFF</color>
+    <color name="widget_background_bottom">#F2F2F7</color>
+    <color name="widget_primary">#111111</color>
+    <color name="widget_secondary">#8C111111</color>
 </resources>

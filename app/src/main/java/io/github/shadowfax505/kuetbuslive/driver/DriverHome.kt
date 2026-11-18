@@ -94,7 +94,7 @@ fun DriverHome(session: SessionViewModel, user: AppUser) {
             user, campus, onPickStop = null,
             onOpenComplaints = { page = "complaints" },
             onOpenNews = { page = "news" },
-            onSignOut = { session.signOut() },
+            onSignOut = { session.signOut() }, session = session,
             onBack = { page = "home" },
         )
         "complaints" -> MyComplaintsScreen(user, campus, onBack = { page = "profile" })

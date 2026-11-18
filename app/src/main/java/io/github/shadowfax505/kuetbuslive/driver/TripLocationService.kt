@@ -18,6 +18,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.firebase.firestore.FirebaseFirestoreException
 import io.github.shadowfax505.kuetbuslive.KuetBusApp
 import io.github.shadowfax505.kuetbuslive.MainActivity
 import io.github.shadowfax505.kuetbuslive.R
@@ -152,6 +153,16 @@ class TripLocationService : LifecycleService() {
                     // The server refused, for example because this bus isn't assigned to this driver today.
                     TripTracker.failed("Could not start the trip: ${e.localizedMessage ?: "refused by the server"}")
                     stopUpdates()
+                    stopSelf()
+                } else if (e is FirebaseFirestoreException &&
+                    (e.code == FirebaseFirestoreException.Code.NOT_FOUND ||
+                        e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED)
+                ) {
+                    // The bus is gone (the admin ended the trip) or this driver may no longer
+                    // move it. Stop instead of showing "Sharing" while nothing reaches riders.
+                    TripTracker.failed("Trip stopped: this bus can no longer be updated from your phone.")
+                    stopUpdates()
+                    wavesJob?.cancel()
                     stopSelf()
                 } else {
                     TripTracker.status("Weak signal, retrying…")

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Home screen widget in dark mode, the same greys as the iOS widget. -->
+    <color name="widget_background_top">#1C1C1E</color>
+    <color name="widget_background_bottom">#1C1C1E</color>
+    <color name="widget_primary">#FFFFFF</color>
+    <color name="widget_secondary">#99FFFFFF</color>
+</resources>

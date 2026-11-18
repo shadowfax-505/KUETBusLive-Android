@@ -8,4 +8,14 @@
     <string name="trip_channel_description">আপনার বাসের অবস্থান শেয়ার হওয়ার সময় দেখানো হয়।</string>
     <string name="arrival_channel_name">বাস আসছে</string>
     <string name="arrival_channel_description">আপনার বাস কয়েক মিনিট দূরে থাকলে জানায়।</string>
+    <string name="widget_label">পরের বাস</string>
+    <string name="widget_description">আপনার পরের কুয়েট বাস, আর সেটি কখন ছাড়বে।</string>
+    <string name="widget_from_campus">কুয়েট থেকে %1$s</string>
+    <string name="widget_from_spot">%1$s থেকে কুয়েট</string>
+    <string name="widget_no_more_buses">আজ আর কোনো বাস নেই</string>
+    <string name="widget_sign_in">সাইন ইন করতে অ্যাপ খুলুন</string>
+    <string name="departure_channel_name">বাস ক্যাম্পাস ছেড়েছে</string>
+    <string name="departure_channel_description">আপনার রুটের বাস কুয়েট ছাড়লে জানায়।</string>
+    <string name="reminder_channel_name">আমার যাত্রার রিমাইন্ডার</string>
+    <string name="reminder_channel_description">আমার যাত্রায় পিন করা বাস ছাড়ার আগে মনে করিয়ে দেয়।</string>
 </resources>

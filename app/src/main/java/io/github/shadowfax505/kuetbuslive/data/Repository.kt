@@ -18,12 +18,15 @@ import io.github.shadowfax505.kuetbuslive.model.ComplaintStatus
 import io.github.shadowfax505.kuetbuslive.model.CrowdLevel
 import io.github.shadowfax505.kuetbuslive.model.DriverAbsence
 import io.github.shadowfax505.kuetbuslive.model.FleetBus
+import io.github.shadowfax505.kuetbuslive.model.MyTrip
 import io.github.shadowfax505.kuetbuslive.model.SpecialDay
 import io.github.shadowfax505.kuetbuslive.model.UserRole
 import io.github.shadowfax505.kuetbuslive.model.Wave
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.retryWhen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.tasks.await
 
 // One place for every Firestore read and write. Collections and fields follow
@@ -33,16 +36,22 @@ object Repository {
     private val db: FirebaseFirestore get() = FirebaseFirestore.getInstance()
 
     // A live query as a Flow. A listener error (for example "permission denied" right
-    // after signing out) ends in an empty list instead of crashing the screen.
+    // after signing out, or while a fresh sign-in token is on its way) shows an empty
+    // list instead of crashing the screen. Firestore closes a listener that failed, so
+    // it is opened again after 5 s, then a little longer each time, up to a minute.
     private fun <T> Query.live(map: (DocumentSnapshot) -> T?): Flow<List<T>> = callbackFlow {
         val registration = addSnapshotListener { snapshot, error ->
             if (error != null) {
                 trySend(emptyList())
+                close(error)
                 return@addSnapshotListener
             }
             trySend(snapshot?.documents?.mapNotNull(map) ?: emptyList())
         }
         awaitClose { registration.remove() }
+    }.retryWhen { _, attempt ->
+        delay((5_000L shl attempt.coerceAtMost(4).toInt()).coerceAtMost(60_000L))
+        true
     }
 
     // ---------- Users ----------
@@ -66,6 +75,28 @@ object Repository {
         db.collection("users").document(uid).set(data).await()
     }
 
+    suspend fun adminCount(): Int =
+        db.collection("users").whereEqualTo("role", UserRole.ADMIN.raw).get().await().size()
+
+    // Everything an account owns that the rules let its owner delete: a running bus,
+    // saved places, a wave or stop request still open, complaints, then the profile.
+    suspend fun deleteAccountData(uid: String, wavingAtBusId: String?) {
+        wavingAtBusId?.let { deleteWave(it, uid) }
+        db.collection("buses").whereEqualTo("driverId", uid).get().await().documents.forEach { bus ->
+            bus.reference.delete().await()
+        }
+        db.collection("users").document(uid).collection("places").get().await().documents.forEach {
+            it.reference.delete().await()
+        }
+        db.collection("users").document(uid).collection("myTrips").get().await().documents.forEach {
+            it.reference.delete().await()
+        }
+        db.collection("complaints").whereEqualTo("uid", uid).get().await().documents.forEach {
+            it.reference.delete().await()
+        }
+        db.collection("users").document(uid).delete().await()
+    }
+
     suspend fun updateName(uid: String, name: String) {
         db.collection("users").document(uid).update("name", name).await()
     }
@@ -86,6 +117,36 @@ object Repository {
 
     suspend fun setActive(uid: String, active: Boolean) {
         db.collection("users").document(uid).update("active", active).await()
+    }
+
+    // ---------- My trips (users/{uid}/myTrips/{scheduleId}, same fields as iOS) ----------
+
+    fun myTrips(uid: String): Flow<List<MyTrip>> =
+        db.collection("users").document(uid).collection("myTrips").live { d ->
+            @Suppress("UNCHECKED_CAST")
+            val days = (d.get("days") as? List<Any?>)?.filterIsInstance<String>() ?: return@live null
+            MyTrip(
+                scheduleId = d.id,
+                leg = MyTrip.Leg.from(d.getString("leg")),
+                days = days,
+                remindMinutes = (d.getLong("remindMinutes") ?: 0L).toInt(),
+                createdAtMillis = d.getTimestamp("createdAt")?.toDate()?.time ?: 0L,
+            )
+        }
+
+    suspend fun saveMyTrip(uid: String, trip: MyTrip) {
+        db.collection("users").document(uid).collection("myTrips").document(trip.scheduleId).set(
+            mapOf(
+                "leg" to trip.leg.raw,
+                "days" to trip.days,
+                "remindMinutes" to trip.remindMinutes,
+                "createdAt" to trip.createdAtMillis.toTimestamp(),
+            )
+        ).await()
+    }
+
+    suspend fun deleteMyTrip(uid: String, scheduleId: String) {
+        db.collection("users").document(uid).collection("myTrips").document(scheduleId).delete().await()
     }
 
     // ---------- Timetable and routes ----------

@@ -70,7 +70,7 @@ fun AdminHome(session: SessionViewModel, user: AppUser) {
         "news" -> { NewsScreen(user, campus, onBack = { page = null }); return }
         "profile" -> {
             ProfileScreen(user, campus, onPickStop = null, onOpenComplaints = { page = "mine" }, onOpenNews = null,
-                onSignOut = { session.signOut() }, onBack = { page = null })
+                onSignOut = { session.signOut() }, session = session, onBack = { page = null })
             return
         }
         "mine" -> { MyComplaintsScreen(user, campus, onBack = { page = "profile" }); return }
