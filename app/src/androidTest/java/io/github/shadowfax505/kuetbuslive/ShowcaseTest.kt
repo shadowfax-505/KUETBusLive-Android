@@ -18,6 +18,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import org.json.JSONObject
 import io.github.shadowfax505.kuetbuslive.widget.NextBusWidget
+import io.github.shadowfax505.kuetbuslive.data.WidgetColour
+import io.github.shadowfax505.kuetbuslive.data.WidgetColours
 import io.github.shadowfax505.kuetbuslive.data.WidgetFont
 import io.github.shadowfax505.kuetbuslive.data.WidgetFonts
 import org.junit.After
@@ -202,7 +204,7 @@ class ShowcaseTest {
     }
 
     // The home screen widget in its three sizes, from what the app saved for it, and the
-    // medium size once in each of the other fonts.
+    // medium size once in each of the other fonts and colours.
     private fun widgetShots(name: String) {
         val context = instrumentation.targetContext
         widgetShot("$name-small", "small", 170, 170)
@@ -214,6 +216,13 @@ class ShowcaseTest {
             widgetShot("$name-${font.raw}", "medium", 340, 170)
         }
         WidgetFonts.set(context, chosen)
+        val colour = WidgetColours.current(context)
+        WidgetColour.entries.filter { it != colour }.forEach { c ->
+            WidgetColours.set(context, c)
+            widgetShot("$name-${c.raw}", "medium", 340, 170)
+            widgetShot("$name-large-${c.raw}", "large", 340, 360)
+        }
+        WidgetColours.set(context, colour)
     }
 
     private fun widgetShot(name: String, size: String, widthDp: Int, heightDp: Int) {
