@@ -18,6 +18,10 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import org.json.JSONObject
 import io.github.shadowfax505.kuetbuslive.widget.NextBusWidget
+import io.github.shadowfax505.kuetbuslive.data.WidgetColour
+import io.github.shadowfax505.kuetbuslive.data.WidgetColours
+import io.github.shadowfax505.kuetbuslive.data.WidgetFont
+import io.github.shadowfax505.kuetbuslive.data.WidgetFonts
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -199,20 +203,45 @@ class ShowcaseTest {
         File(shots, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
-    // The home screen widget, drawn at its 2 x 2 size from what the app saved for it.
-    private fun widgetShot(name: String) {
+    // The home screen widget in its three sizes, from what the app saved for it, and the
+    // medium size once in each of the other fonts and colours.
+    private fun widgetShots(name: String) {
         val context = instrumentation.targetContext
-        val size = (170 * context.resources.displayMetrics.density).toInt()
+        widgetShot("$name-small", "small", 170, 170)
+        widgetShot(name, "medium", 340, 170)
+        widgetShot("$name-large", "large", 340, 360)
+        val chosen = WidgetFonts.current(context)
+        WidgetFont.entries.filter { it != chosen }.forEach { font ->
+            WidgetFonts.set(context, font)
+            widgetShot("$name-${font.raw}", "medium", 340, 170)
+        }
+        WidgetFonts.set(context, chosen)
+        val colour = WidgetColours.current(context)
+        WidgetColour.entries.filter { it != colour }.forEach { c ->
+            WidgetColours.set(context, c)
+            widgetShot("$name-${c.raw}", "medium", 340, 170)
+            widgetShot("$name-large-${c.raw}", "large", 340, 360)
+        }
+        WidgetColours.set(context, colour)
+    }
+
+    private fun widgetShot(name: String, size: String, widthDp: Int, heightDp: Int) {
+        val context = instrumentation.targetContext
+        val density = context.resources.displayMetrics.density
+        val width = (widthDp * density).toInt()
+        val height = (heightDp * density).toInt()
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
         val latch = java.util.concurrent.CountDownLatch(1)
         handler.post {
             runCatching {
                 val parent = android.widget.FrameLayout(context)
-                val view = NextBusWidget.preview(context).apply(context, parent)
-                val spec = android.view.View.MeasureSpec.makeMeasureSpec(size, android.view.View.MeasureSpec.EXACTLY)
-                view.measure(spec, spec)
-                view.layout(0, 0, size, size)
-                val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+                val view = NextBusWidget.preview(context, size, widthDp.toFloat()).apply(context, parent)
+                view.measure(
+                    android.view.View.MeasureSpec.makeMeasureSpec(width, android.view.View.MeasureSpec.EXACTLY),
+                    android.view.View.MeasureSpec.makeMeasureSpec(height, android.view.View.MeasureSpec.EXACTLY),
+                )
+                view.layout(0, 0, width, height)
+                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
                 view.draw(android.graphics.Canvas(bitmap))
                 File(shots, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
             }.onFailure { Log.e("Showcase", "Widget shot failed", it) }
@@ -292,7 +321,7 @@ class ShowcaseTest {
             // The pinned trip's row ("Sun to Thu · reminder 10 min before"); the header is upper case.
             runCatching { waitFor("min before") }
             shot("${p}06-schedule")
-            widgetShot("${p}15-widget")
+            widgetShots("${p}15-widget")
             tap("Routes")
             shot("${p}07-routes")
             tap("News")

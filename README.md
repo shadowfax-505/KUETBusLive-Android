@@ -86,7 +86,7 @@ Every picture, in both modes, is in [`docs/screenshots`](docs/screenshots).
 | 🔔 Arrival alert | A notification when your bus is about 5 minutes from your stop. |
 | 📅 Official timetable | All KUET trips (Sunday to Thursday and Saturday), with your next bus at the top. |
 | 📌 My trips | Pin the buses you usually take with the days, get a reminder before each, or add them to the calendar. Pins follow you to the iOS app. |
-| 📱 Home screen widget | The next bus you can take, in the same black-and-white look as the iOS widget, with the KUET bus mark. |
+| 📱 Home screen widget | Small, medium and large, like the iOS widget: the live ETA or the next bus from the timetable, a ring and a track with the bus driving to your stop. Pick its font in Profile (fonts and licences in docs/fonts). |
 | 📨 Departure pushes | "Normal-2 just left campus" for the route with your stop (teachers' buses only reach teachers). |
 | 🗑️ Delete account | Removes your profile, pins, places, complaints and login, from Profile. |
 | 🎓 Bus allocation | Students see only *Normal* (student) buses. Teachers can ride any bus. |
@@ -246,7 +246,7 @@ app/src/main/java/io/github/shadowfax505/kuetbuslive/
   campus/     routes, news, complaints, profile, stop picker
   schedule/   timetable and its editor
   ui/         theme, shared components, the intro, the home screen for each role
-  widget/     the Next bus home screen widget (RemoteViews)
+  widget/     the Next bus home screen widget in three sizes (RemoteViews)
   push/       route topics and the "just left campus" push
   reminders/  weekly My trips reminders, set again after a restart
 ```
