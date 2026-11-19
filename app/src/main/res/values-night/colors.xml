@@ -6,4 +6,22 @@
     <color name="widget_primary">#FFFFFF</color>
     <color name="widget_secondary">#99FFFFFF</color>
     <color name="widget_hairline">#1FFFFFFF</color>
+    <!-- Forest green: one colour lit from above, lighter at the top. -->
+    <color name="widget_forest_top">#22542E</color>
+    <color name="widget_forest_bottom">#173221</color>
+    <color name="widget_forest_primary">#FFF6DA</color>
+    <color name="widget_forest_secondary">#B3FFFFFF</color>
+    <color name="widget_forest_hairline">#26FFFFFF</color>
+    <!-- Violet: one colour lit from above, lighter at the top. -->
+    <color name="widget_violet_top">#37239D</color>
+    <color name="widget_violet_bottom">#371D75</color>
+    <color name="widget_violet_primary">#FFFFFF</color>
+    <color name="widget_violet_secondary">#B3FFFFFF</color>
+    <color name="widget_violet_hairline">#26FFFFFF</color>
+    <!-- Butter cream: one colour lit from above, lighter at the top. -->
+    <color name="widget_butter_top">#6A4C29</color>
+    <color name="widget_butter_bottom">#473A1F</color>
+    <color name="widget_butter_primary">#FFF6DA</color>
+    <color name="widget_butter_secondary">#B3FFFFFF</color>
+    <color name="widget_butter_hairline">#26FFFFFF</color>
 </resources>

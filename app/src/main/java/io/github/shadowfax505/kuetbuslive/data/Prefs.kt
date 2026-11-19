@@ -30,6 +30,10 @@ class Prefs(context: Context) {
         get() = WidgetFont.from(prefs.getString("widgetFont", null))
         set(value) = prefs.edit().putString("widgetFont", value.raw).apply()
 
+    var widgetColour: WidgetColour
+        get() = WidgetColour.from(prefs.getString("widgetColour", null))
+        set(value) = prefs.edit().putString("widgetColour", value.raw).apply()
+
     var wavingAtBusId: String?
         get() = prefs.getString("wavingAtBusId", null)?.takeIf { prefs.getLong("wavingUntil", 0) > System.currentTimeMillis() }
         set(value) = prefs.edit().putString("wavingAtBusId", value).apply()

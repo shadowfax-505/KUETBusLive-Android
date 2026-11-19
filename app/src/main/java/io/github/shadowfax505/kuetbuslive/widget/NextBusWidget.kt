@@ -7,12 +7,15 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import io.github.shadowfax505.kuetbuslive.MainActivity
 import io.github.shadowfax505.kuetbuslive.R
+import io.github.shadowfax505.kuetbuslive.data.WidgetColour
+import io.github.shadowfax505.kuetbuslive.data.WidgetColours
 import io.github.shadowfax505.kuetbuslive.data.WidgetFonts
 import io.github.shadowfax505.kuetbuslive.model.BusSchedule
 import io.github.shadowfax505.kuetbuslive.model.CrowdLevel
@@ -142,12 +145,47 @@ class NextBusWidget : AppWidgetProvider() {
                 later(v, data)
             }
         }
+        paint(context, v, size, WidgetColours.current(context))
         val open = PendingIntent.getActivity(
             context, 0, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         v.setOnClickPendingIntent(R.id.widget_root, open)
         return v
+    }
+
+    // The rider's colour. Classic is already in the layouts; the others swap the
+    // background and recolour the text and pictures. Only views that exist in this
+    // size are touched, since a missing one would break the whole widget.
+    private fun paint(context: Context, v: RemoteViews, size: Size, colour: WidgetColour) {
+        if (colour == WidgetColour.CLASSIC) return
+        v.setInt(R.id.widget_root, "setBackgroundResource", colour.background)
+        val track = size != Size.SMALL
+        val ring = size != Size.MEDIUM
+        val primaryText = listOf(R.id.widget_title) +
+            (if (ring) listOf(R.id.widget_ring_number) else emptyList()) +
+            (if (track) listOf(R.id.widget_number, R.id.widget_stop) else emptyList())
+        val secondaryText = listOf(R.id.widget_headline, R.id.widget_subtitle) +
+            (if (ring) listOf(R.id.widget_ring_unit) else emptyList()) +
+            (if (track) listOf(R.id.widget_unit, R.id.widget_distance, R.id.widget_kuet) else emptyList()) +
+            (if (size == Size.LARGE) listOf(
+                R.id.widget_route, R.id.widget_later1_name, R.id.widget_later1_time,
+                R.id.widget_later2_name, R.id.widget_later2_time,
+            ) else emptyList())
+        val tinted = listOf(R.id.widget_mark) +
+            (if (ring) listOf(R.id.widget_ring) else emptyList()) +
+            (if (track) listOf(R.id.widget_track, R.id.widget_pin) else emptyList())
+        primaryText.forEach { v.color(context, it, "setTextColor", colour.primary) }
+        secondaryText.forEach { v.color(context, it, "setTextColor", colour.secondary) }
+        tinted.forEach { v.color(context, it, "setColorFilter", colour.primary) }
+        if (size == Size.LARGE) v.color(context, R.id.widget_hairline, "setBackgroundColor", colour.hairline)
+    }
+
+    // From Android 12 the colour is looked up when the widget is drawn, so it follows
+    // dark mode by itself; before that it is fixed until the next refresh.
+    private fun RemoteViews.color(context: Context, id: Int, method: String, res: Int) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) setColor(id, method, res)
+        else setInt(id, method, context.getColor(res))
     }
 
     private fun small(context: Context, v: RemoteViews, data: Data) {
