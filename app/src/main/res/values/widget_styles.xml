@@ -34,6 +34,15 @@
     <style name="Widget.Board.Number.Time">
         <item name="android:textSize">32sp</item>
     </style>
+    <style name="Widget.Board.Stop" parent="">
+        <item name="android:fontFamily">@font/barlow_condensed_bold</item>
+        <item name="android:letterSpacing">0.1</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/widget_primary</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
     <style name="Widget.Board.Small" parent="">
         <item name="android:fontFamily">@font/barlow_condensed_medium</item>
         <item name="android:textColor">@color/widget_secondary</item>
@@ -72,6 +81,15 @@
     <style name="Widget.Grotesk.Number.Time">
         <item name="android:textSize">26sp</item>
     </style>
+    <style name="Widget.Grotesk.Stop" parent="">
+        <item name="android:fontFamily">@font/space_grotesk_bold</item>
+        <item name="android:letterSpacing">0.06</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/widget_primary</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
     <style name="Widget.Grotesk.Small" parent="">
         <item name="android:fontFamily">@font/space_grotesk_medium</item>
         <item name="android:textColor">@color/widget_secondary</item>
@@ -109,6 +127,15 @@
     </style>
     <style name="Widget.Timetable.Number.Time">
         <item name="android:textSize">22sp</item>
+    </style>
+    <style name="Widget.Timetable.Stop" parent="">
+        <item name="android:fontFamily">@font/jetbrains_mono_bold</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/widget_primary</item>
+        <item name="android:textSize">11.5sp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
     </style>
     <style name="Widget.Timetable.Small" parent="">
         <item name="android:fontFamily">@font/jetbrains_mono_medium</item>
