@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import com.google.firebase.FirebaseApp
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import org.maplibre.android.MapLibre
 
 class KuetBusApp : Application() {
@@ -12,6 +13,10 @@ class KuetBusApp : Application() {
         super.onCreate()
         // initializeApp returns null when google-services.json was not added to the build.
         firebaseReady = FirebaseApp.getApps(this).isNotEmpty() || FirebaseApp.initializeApp(this) != null
+        // Crash reports come only from release builds, and carry no name, email or user ID.
+        if (firebaseReady) {
+            runCatching { FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG) }
+        }
         MapLibre.getInstance(this)
         createNotificationChannels()
     }

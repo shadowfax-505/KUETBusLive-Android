@@ -8,6 +8,8 @@ plugins {
 // the app then shows a short "setup needed" screen instead of signing in.
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
+    // Crash reports (Firebase Crashlytics) need the same config.
+    apply(plugin = "com.google.firebase.crashlytics")
 }
 
 android {
@@ -60,6 +62,13 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             if (releaseStore != null) signingConfig = signingConfigs.getByName("release")
+            // Crash reports need R8's mapping file to show real names. It is uploaded when a
+            // release is built on your own computer, not from CI.
+            if (pluginManager.hasPlugin("com.google.firebase.crashlytics")) {
+                configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
+                    mappingFileUploadEnabled = System.getenv("CI") == null
+                }
+            }
             buildConfigField("Boolean", "DEMO_ACCOUNTS", "false")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
@@ -101,6 +110,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.messaging)
+    implementation(libs.firebase.crashlytics)
     implementation(libs.play.services.location)
     implementation(libs.coroutines.android)
     implementation(libs.coroutines.play.services)
