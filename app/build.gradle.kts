@@ -12,12 +12,13 @@ if (file("google-services.json").exists()) {
 
 android {
     namespace = "io.github.shadowfax505.kuetbuslive"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "io.github.shadowfax505.kuetbuslive"
         minSdk = 26
-        targetSdk = 35
+        // Google Play asks new apps and updates to target the latest Android (API 36 from Aug 2026).
+        targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
         // Runs the screenshot tour against the local Firebase emulators.
@@ -25,12 +26,26 @@ android {
     }
 
     // A fixed debug key, so a newer demo build installs over an older one on the same phone.
+    // The release (Play upload) key is never in git: it comes from environment variables
+    // (CI secrets) or from ~/.gradle/gradle.properties on the computer that builds releases.
+    // Without it, the release build is produced unsigned.
+    fun secret(name: String): String? =
+        System.getenv(name)?.takeIf { it.isNotBlank() } ?: (findProperty(name) as String?)?.takeIf { it.isNotBlank() }
+    val releaseStore = secret("KUETBUS_RELEASE_STORE_FILE")
     signingConfigs {
         getByName("debug") {
             storeFile = file("debug.keystore")
             storePassword = "android"
             keyAlias = "androiddebugkey"
             keyPassword = "android"
+        }
+        if (releaseStore != null) {
+            create("release") {
+                storeFile = file(releaseStore)
+                storePassword = secret("KUETBUS_RELEASE_STORE_PASSWORD")
+                keyAlias = secret("KUETBUS_RELEASE_KEY_ALIAS")
+                keyPassword = secret("KUETBUS_RELEASE_KEY_PASSWORD")
+            }
         }
     }
 
@@ -41,7 +56,10 @@ android {
             buildConfigField("Boolean", "DEMO_ACCOUNTS", "true")
         }
         release {
-            isMinifyEnabled = false
+            // R8 shrinks and obfuscates the release build; keep rules in proguard-rules.pro.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            if (releaseStore != null) signingConfig = signingConfigs.getByName("release")
             buildConfigField("Boolean", "DEMO_ACCOUNTS", "false")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
