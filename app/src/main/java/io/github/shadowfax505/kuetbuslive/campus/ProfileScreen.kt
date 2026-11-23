@@ -46,6 +46,17 @@ import io.github.shadowfax505.kuetbuslive.data.AppIcons
 import io.github.shadowfax505.kuetbuslive.data.BusStyle
 import io.github.shadowfax505.kuetbuslive.data.BusStyles
 import io.github.shadowfax505.kuetbuslive.data.Prefs
+import io.github.shadowfax505.kuetbuslive.data.WidgetColour
+import io.github.shadowfax505.kuetbuslive.data.WidgetColours
+import io.github.shadowfax505.kuetbuslive.data.WidgetFont
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.colorResource
+import androidx.compose.foundation.layout.size
+import io.github.shadowfax505.kuetbuslive.data.WidgetFonts
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 import io.github.shadowfax505.kuetbuslive.rider.BusPreview
 import io.github.shadowfax505.kuetbuslive.model.AppUser
 import io.github.shadowfax505.kuetbuslive.ui.components.ActionRow
@@ -75,6 +86,8 @@ fun ProfileScreen(
     var alerts by remember { mutableStateOf(prefs.arrivalAlerts) }
     var appIcon by remember { mutableStateOf(AppIcons.current(context)) }
     val busStyle = BusStyles.current(context)
+    val widgetFont = WidgetFonts.current(context)
+    val widgetColour = WidgetColours.current(context)
     var editingName by remember { mutableStateOf(false) }
     var confirmSignOut by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
@@ -128,6 +141,16 @@ fun ProfileScreen(
         item {
             Section(header = "Bus on the trip bar", footer = "How the bus looks as it drives towards your stop.") {
                 BusStylePicker(busStyle) { BusStyles.set(context, it) }
+            }
+        }
+        item {
+            Section(header = "Widget font", footer = "The type on your home screen widget.") {
+                WidgetFontPicker(widgetFont) { WidgetFonts.set(context, it) }
+            }
+        }
+        item {
+            Section(header = "Widget colour", footer = "Each colour has a light and a dark version that follow your phone.") {
+                WidgetColourPicker(widgetColour) { WidgetColours.set(context, it) }
             }
         }
         item {
@@ -240,6 +263,99 @@ private fun BusStylePicker(selected: BusStyle, onPick: (BusStyle) -> Unit) {
                 Spacer(Modifier.height(6.dp))
                 Text(
                     style.title,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WidgetFontPicker(selected: WidgetFont, onPick: (WidgetFont) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+    ) {
+        WidgetFont.entries.forEach { font ->
+            val isSelected = font == selected
+            Column(
+                Modifier
+                    .clip(RoundedCornerShape(14.dp))
+                    .clickable(onClickLabel = "Use the ${font.title} font") { onPick(font) }
+                    .padding(6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Column(
+                    Modifier
+                        .border(
+                            2.dp,
+                            if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                            RoundedCornerShape(14.dp),
+                        )
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    // A tiny sample of the widget: a bus name and its minutes.
+                    Text(
+                        if (font == WidgetFont.BOARD) "NORMAL-1" else "Normal-1",
+                        style = TextStyle(fontFamily = FontFamily(Font(font.titleFont)), fontSize = 13.sp),
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        "12",
+                        style = TextStyle(fontFamily = FontFamily(Font(font.numberFont)), fontSize = 26.sp),
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    font.title,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WidgetColourPicker(selected: WidgetColour, onPick: (WidgetColour) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+    ) {
+        WidgetColour.entries.forEach { colour ->
+            val isSelected = colour == selected
+            Column(
+                Modifier
+                    .clip(RoundedCornerShape(14.dp))
+                    .clickable(onClickLabel = "Use ${colour.title} on the widget") { onPick(colour) }
+                    .padding(4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                // A small widget tile in this colour, with its text colour as a sample.
+                Box(
+                    Modifier
+                        .border(
+                            2.dp,
+                            if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                            RoundedCornerShape(16.dp),
+                        )
+                        .padding(3.dp)
+                        .size(54.dp)
+                        .clip(RoundedCornerShape(13.dp))
+                        .background(Brush.verticalGradient(listOf(colorResource(colour.top), colorResource(colour.bottom))))
+                        .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(13.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("8", color = colorResource(colour.primary), style = MaterialTheme.typography.titleLarge)
+                }
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    colour.title,
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                 )

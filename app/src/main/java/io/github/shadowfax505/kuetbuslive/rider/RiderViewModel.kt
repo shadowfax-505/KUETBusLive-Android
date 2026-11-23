@@ -22,7 +22,9 @@ import io.github.shadowfax505.kuetbuslive.data.StatsStore
 import io.github.shadowfax505.kuetbuslive.model.AppUser
 import io.github.shadowfax505.kuetbuslive.model.Bus
 import io.github.shadowfax505.kuetbuslive.model.BusRoute
+import io.github.shadowfax505.kuetbuslive.model.BusAudience
 import io.github.shadowfax505.kuetbuslive.model.BusSchedule
+import io.github.shadowfax505.kuetbuslive.model.CrowdLevel
 import io.github.shadowfax505.kuetbuslive.model.CatchPlan
 import io.github.shadowfax505.kuetbuslive.model.DropPlan
 import io.github.shadowfax505.kuetbuslive.model.Geo
@@ -32,6 +34,7 @@ import io.github.shadowfax505.kuetbuslive.model.TripOption
 import io.github.shadowfax505.kuetbuslive.model.UserRole
 import io.github.shadowfax505.kuetbuslive.model.Wave
 import io.github.shadowfax505.kuetbuslive.model.WalkingSpeed
+import io.github.shadowfax505.kuetbuslive.widget.WidgetStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -240,6 +243,7 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
             }
             if (info != null) {
                 checkArrival(bus, info, stop)
+                publishToWidget(bus, info, stop)
                 if (bus.id == _state.value.selectedBusId) updatePlan()
             }
         }
@@ -253,6 +257,28 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
         if (path != null && (Geo.metresAhead(bus.position, stop.position, path) ?: 0.0) < -50) return
         alerted += bus.id
         notifier.notifyArriving(bus.tripName, stop.name, info.minutes)
+    }
+
+    // The home screen widget shows the bus that reaches the rider's stop first.
+    private fun publishToWidget(bus: Bus, info: RouteInfo, stop: Stop) {
+        val path = _state.value.routePaths[bus.routeId]
+        // Not once the bus has passed the stop.
+        if (path != null && (Geo.metresAhead(bus.position, stop.position, path) ?: 0.0) < -50) return
+        val now = System.currentTimeMillis()
+        WidgetStore.saveLive(
+            getApplication(),
+            WidgetStore.LiveTrip(
+                busTitle = bus.number,
+                stopName = stop.name,
+                etaMinutes = info.minutes,
+                distanceKm = info.kilometres,
+                crowd = if (bus.isCrowded(now)) CrowdLevel.FULL.raw else CrowdLevel.UNKNOWN.raw,
+                progress = progressFor(bus) ?: 0.0,
+                stopFractions = routeFor(bus)?.let { WidgetStore.stopFractions(it, stop.name) }.orEmpty(),
+                teacher = bus.audience == BusAudience.TEACHER,
+                updatedAt = now,
+            ),
+        )
     }
 
     // Progress from the first stop to the rider's stop, 0..1.

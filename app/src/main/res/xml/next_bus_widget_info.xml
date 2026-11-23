@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Resizable from 2 x 2 (a ring) through 4 x 2 (the next bus and the track) to 4 x 4 (all of it). -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/widget_description"
-    android:initialLayout="@layout/widget_next_bus"
+    android:initialLayout="@layout/widget_small_board"
     android:minWidth="110dp"
     android:minHeight="110dp"
-    android:previewLayout="@layout/widget_next_bus"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="110dp"
+    android:previewLayout="@layout/widget_medium_board"
     android:resizeMode="horizontal|vertical"
-    android:targetCellWidth="2"
+    android:targetCellWidth="4"
     android:targetCellHeight="2"
     android:updatePeriodMillis="1800000"
     android:widgetCategory="home_screen" />
