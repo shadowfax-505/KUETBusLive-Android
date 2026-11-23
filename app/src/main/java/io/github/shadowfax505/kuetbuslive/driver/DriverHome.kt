@@ -1,5 +1,7 @@
 package io.github.shadowfax505.kuetbuslive.driver
 
+import io.github.shadowfax505.kuetbuslive.ui.components.OfflineBanner
+import io.github.shadowfax505.kuetbuslive.ui.components.rememberIsOnline
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -197,6 +199,14 @@ private fun DriverTripScreen(user: AppUser, onProfile: () -> Unit) {
                 }
                 IconButton(onClick = onProfile) { Icon(Icons.Rounded.AccountCircle, "Profile") }
             }
+        }
+        // Positions wait on the phone while offline and are sent when the signal returns.
+        if (trip.trip != null) {
+            OfflineBanner(
+                online = rememberIsOnline(),
+                message = "Offline: riders can't see the bus until the signal is back",
+                modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 100.dp),
+            )
         }
 
         Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {

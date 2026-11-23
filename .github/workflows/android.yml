@@ -45,6 +45,21 @@ jobs:
       - name: Build debug APK
         run: ./gradlew --no-daemon assembleDebug
 
+      # The release build runs R8 (code shrinking), so a missing keep rule fails here
+      # instead of on a rider's phone. Signed only when the release key secrets are set.
+      - name: Build release APK
+        env:
+          KUETBUS_RELEASE_STORE_BASE64: ${{ secrets.KUETBUS_RELEASE_STORE_BASE64 }}
+          KUETBUS_RELEASE_STORE_PASSWORD: ${{ secrets.KUETBUS_RELEASE_STORE_PASSWORD }}
+          KUETBUS_RELEASE_KEY_ALIAS: ${{ secrets.KUETBUS_RELEASE_KEY_ALIAS }}
+          KUETBUS_RELEASE_KEY_PASSWORD: ${{ secrets.KUETBUS_RELEASE_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KUETBUS_RELEASE_STORE_BASE64" ]; then
+            printf '%s' "$KUETBUS_RELEASE_STORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            export KUETBUS_RELEASE_STORE_FILE="$RUNNER_TEMP/release.jks"
+          fi
+          ./gradlew --no-daemon assembleRelease
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:

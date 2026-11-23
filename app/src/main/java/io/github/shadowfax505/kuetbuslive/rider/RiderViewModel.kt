@@ -35,7 +35,11 @@ import io.github.shadowfax505.kuetbuslive.model.UserRole
 import io.github.shadowfax505.kuetbuslive.model.Wave
 import io.github.shadowfax505.kuetbuslive.model.WalkingSpeed
 import io.github.shadowfax505.kuetbuslive.widget.WidgetStore
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -74,6 +78,7 @@ data class RiderState(
 // Rider side of the live map: running buses this rider may board, ETAs to their
 // stop, crowd reports, "I'm waiting here", and the best places to wait and to get off. Students only see student buses;
 // teachers see every bus. The same behaviour as the iOS BusViewModel.
+@OptIn(ExperimentalCoroutinesApi::class)
 class RiderViewModel(application: Application) : AndroidViewModel(application) {
     private val prefs = Prefs(application)
     private val notifier = ArrivalNotifier(application)
@@ -92,6 +97,12 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
     private val locationClient = LocationServices.getFusedLocationProviderClient(application)
     private var riderPosition: LatLng? = null
     private var mapVisible = false
+    // The live bus feed and the ETA refresh run while the map is on screen. Every bus
+    // update is a paid Firestore read and every ETA a routing request, so they stop
+    // soon after the rider leaves the map: after a minute, or after 15 minutes when
+    // arrival alerts are on, so an alert for a bus on its way can still fire.
+    private val feedOn = MutableStateFlow(false)
+    private var feedOffJob: Job? = null
     private var tracking = false
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
@@ -117,7 +128,9 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
         started = true
         SpecialDays.start()
         viewModelScope.launch {
-            Repository.buses(onlyStudentBuses = user.role == UserRole.STUDENT).collect { all ->
+            feedOn.flatMapLatest { on ->
+                if (on) Repository.buses(onlyStudentBuses = user.role == UserRole.STUDENT) else emptyFlow()
+            }.collect { all ->
                 val role = this@RiderViewModel.user?.role ?: UserRole.STUDENT
                 // A bus silent for half an hour was left behind by a phone that died mid-trip.
                 val now = System.currentTimeMillis()
@@ -158,6 +171,7 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             while (isActive) {
                 delay(5_000)
+                if (!feedOn.value) continue
                 _state.update { it.copy(nowMillis = System.currentTimeMillis()) }
                 refreshAllEtas(force = false)
             }
@@ -314,6 +328,16 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
     fun setMapVisible(visible: Boolean) {
         mapVisible = visible
         updateTracking()
+        feedOffJob?.cancel()
+        if (visible) {
+            feedOn.value = true
+        } else {
+            val grace = if (prefs.arrivalAlerts) ALERT_GRACE_MILLIS else LEAVE_GRACE_MILLIS
+            feedOffJob = viewModelScope.launch {
+                delay(grace)
+                feedOn.value = false
+            }
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -459,5 +483,10 @@ class RiderViewModel(application: Application) : AndroidViewModel(application) {
             prefs.wavingAtBusId = null
             _state.update { it.copy(wavingAtBusId = null) }
         }
+    }
+
+    private companion object {
+        const val LEAVE_GRACE_MILLIS = 60_000L
+        const val ALERT_GRACE_MILLIS = 15 * 60_000L
     }
 }

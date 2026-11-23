@@ -1,5 +1,7 @@
 package io.github.shadowfax505.kuetbuslive.rider
 
+import io.github.shadowfax505.kuetbuslive.ui.components.OfflineBanner
+import io.github.shadowfax505.kuetbuslive.ui.components.rememberIsOnline
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -167,6 +169,11 @@ fun LiveMapScreen(user: AppUser, vm: RiderViewModel, onPickStop: () -> Unit) {
         )
 
         TopBar(user, onPickStop, Modifier.align(Alignment.TopCenter))
+        OfflineBanner(
+            online = rememberIsOnline(),
+            message = "Offline: bus positions may be out of date",
+            modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 72.dp),
+        )
 
         Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.End) {

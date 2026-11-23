@@ -8,29 +8,51 @@ plugins {
 // the app then shows a short "setup needed" screen instead of signing in.
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
+    // Crash reports (Firebase Crashlytics) need the same config.
+    apply(plugin = "com.google.firebase.crashlytics")
 }
 
 android {
     namespace = "io.github.shadowfax505.kuetbuslive"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "io.github.shadowfax505.kuetbuslive"
         minSdk = 26
-        targetSdk = 35
+        // Google Play asks new apps and updates to target the latest Android (API 36 from Aug 2026).
+        targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
         // Runs the screenshot tour against the local Firebase emulators.
         testInstrumentationRunner = "io.github.shadowfax505.kuetbuslive.ShowcaseRunner"
+        // The routing server for ETAs. The public OSRM demo server is fine for a pilot; for a
+        // campus-wide release set kuetbus.osrmBaseUrl in gradle.properties to your own server.
+        val osrm = (findProperty("kuetbus.osrmBaseUrl") as String?)?.takeIf { it.startsWith("https://") }
+            ?: "https://router.project-osrm.org/route/v1/driving/"
+        buildConfigField("String", "OSRM_BASE_URL", "\"${osrm.trimEnd('/')}/\"")
     }
 
     // A fixed debug key, so a newer demo build installs over an older one on the same phone.
+    // The release (Play upload) key is never in git: it comes from environment variables
+    // (CI secrets) or from ~/.gradle/gradle.properties on the computer that builds releases.
+    // Without it, the release build is produced unsigned.
+    fun secret(name: String): String? =
+        System.getenv(name)?.takeIf { it.isNotBlank() } ?: (findProperty(name) as String?)?.takeIf { it.isNotBlank() }
+    val releaseStore = secret("KUETBUS_RELEASE_STORE_FILE")
     signingConfigs {
         getByName("debug") {
             storeFile = file("debug.keystore")
             storePassword = "android"
             keyAlias = "androiddebugkey"
             keyPassword = "android"
+        }
+        if (releaseStore != null) {
+            create("release") {
+                storeFile = file(releaseStore)
+                storePassword = secret("KUETBUS_RELEASE_STORE_PASSWORD")
+                keyAlias = secret("KUETBUS_RELEASE_KEY_ALIAS")
+                keyPassword = secret("KUETBUS_RELEASE_KEY_PASSWORD")
+            }
         }
     }
 
@@ -41,7 +63,17 @@ android {
             buildConfigField("Boolean", "DEMO_ACCOUNTS", "true")
         }
         release {
-            isMinifyEnabled = false
+            // R8 shrinks and obfuscates the release build; keep rules in proguard-rules.pro.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            if (releaseStore != null) signingConfig = signingConfigs.getByName("release")
+            // Crash reports need R8's mapping file to show real names. It is uploaded when a
+            // release is built on your own computer, not from CI.
+            if (pluginManager.hasPlugin("com.google.firebase.crashlytics")) {
+                configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
+                    mappingFileUploadEnabled = System.getenv("CI") == null
+                }
+            }
             buildConfigField("Boolean", "DEMO_ACCOUNTS", "false")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
@@ -83,6 +115,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.messaging)
+    implementation(libs.firebase.crashlytics)
     implementation(libs.play.services.location)
     implementation(libs.coroutines.android)
     implementation(libs.coroutines.play.services)

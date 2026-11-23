@@ -31,6 +31,7 @@ import io.github.shadowfax505.kuetbuslive.model.LatLng
 import io.github.shadowfax505.kuetbuslive.model.RouteLine
 import io.github.shadowfax505.kuetbuslive.model.RouteTiming
 import io.github.shadowfax505.kuetbuslive.model.SeenWave
+import io.github.shadowfax505.kuetbuslive.model.SendPolicy
 import io.github.shadowfax505.kuetbuslive.model.SegmentProfile
 import io.github.shadowfax505.kuetbuslive.model.StatKey
 import io.github.shadowfax505.kuetbuslive.model.TimeBucket
@@ -53,6 +54,7 @@ class TripLocationService : LifecycleService() {
 
     private val client by lazy { LocationServices.getFusedLocationProviderClient(this) }
     private var lastSentMillis = 0L
+    private var lastSentAt: LatLng? = null
     private var created = false
     private var tripRecordId: String? = null
     private var sending = false
@@ -129,12 +131,13 @@ class TripLocationService : LifecycleService() {
             .onFailure { TripTracker.failed("Location permission is needed to share the bus position.") ; stopSelf() }
     }
 
-    // At most every 5 seconds, like the iOS app.
+    // When the bus moved, or every 20 s while it stands (SendPolicy, same as iOS).
     private fun send(position: LatLng, heading: Double?, speed: Double?) {
         val trip = TripTracker.state.value.trip ?: return
         val now = System.currentTimeMillis()
-        if (sending || now - lastSentMillis < SEND_INTERVAL_MILLIS) return
+        if (sending || !SendPolicy.shouldSend(now, lastSentMillis, if (created) lastSentAt else null, position)) return
         lastSentMillis = now
+        lastSentAt = position
         sending = true
         lifecycleScope.launch {
             try {
@@ -257,7 +260,6 @@ class TripLocationService : LifecycleService() {
 
     companion object {
         private const val NOTIFICATION_ID = 42
-        private const val SEND_INTERVAL_MILLIS = 5_000L
         private const val SAMPLE_MILLIS = 2_000L
         // Ending a trip waits at most this long for the numbers to be saved.
         private const val UPLOAD_TIMEOUT_MILLIS = 8_000L
