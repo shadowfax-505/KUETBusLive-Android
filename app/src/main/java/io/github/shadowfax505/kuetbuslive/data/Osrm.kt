@@ -37,7 +37,8 @@ data class RouteInfo(
 }
 
 object Osrm {
-    private const val BASE_URL = "https://router.project-osrm.org/route/v1/driving/"
+    // Set in app/build.gradle.kts (kuetbus.osrmBaseUrl); the public demo server by default.
+    private val BASE_URL = io.github.shadowfax505.kuetbuslive.BuildConfig.OSRM_BASE_URL
     const val REFRESH_MILLIS = 30_000L
     private const val TAG = "Osrm"
 

@@ -25,6 +25,11 @@ android {
         versionName = "0.1.0"
         // Runs the screenshot tour against the local Firebase emulators.
         testInstrumentationRunner = "io.github.shadowfax505.kuetbuslive.ShowcaseRunner"
+        // The routing server for ETAs. The public OSRM demo server is fine for a pilot; for a
+        // campus-wide release set kuetbus.osrmBaseUrl in gradle.properties to your own server.
+        val osrm = (findProperty("kuetbus.osrmBaseUrl") as String?)?.takeIf { it.startsWith("https://") }
+            ?: "https://router.project-osrm.org/route/v1/driving/"
+        buildConfigField("String", "OSRM_BASE_URL", "\"${osrm.trimEnd('/')}/\"")
     }
 
     // A fixed debug key, so a newer demo build installs over an older one on the same phone.
